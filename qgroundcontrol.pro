@@ -613,7 +613,6 @@ HEADERS += \
     src/qgcunittest/TCPLoopBackServer.h \
     src/qgcunittest/UnitTest.h \
     src/ViewWidgets/LogDownloadTest.h \
-    src/VehicleSetup/SetupViewTest.h \
 
 SOURCES += \
     src/FactSystem/FactSystemTestBase.cc \
@@ -642,7 +641,6 @@ SOURCES += \
     src/qgcunittest/UnitTest.cc \
     src/qgcunittest/UnitTestList.cc \
     src/ViewWidgets/LogDownloadTest.cc \
-    src/VehicleSetup/SetupViewTest.cc \
 } # !MobileBuild
 } # DebugBuild
 

@@ -688,16 +688,6 @@ void QGCApplication::showMessage(const QString& message)
     }
 }
 
-void QGCApplication::showFlyView(void)
-{
-    QMetaObject::invokeMethod(_rootQmlObject(), "showFlyView");
-}
-
-void QGCApplication::showPlanView(void)
-{
-    QMetaObject::invokeMethod(_rootQmlObject(), "showPlanView");
-}
-
 void QGCApplication::showSetupView(void)
 {
     QMetaObject::invokeMethod(_rootQmlObject(), "showSetupView");
@@ -708,29 +698,6 @@ void QGCApplication::qmlAttemptWindowClose(void)
     QMetaObject::invokeMethod(_rootQmlObject(), "attemptWindowClose");
 }
 
-
-void QGCApplication::_showSetupFirmware(void)
-{
-    QMetaObject::invokeMethod(_rootQmlObject(), "showSetupFirmware");
-}
-
-void QGCApplication::_showSetupParameters(void)
-{
-    QMetaObject::invokeMethod(_rootQmlObject(), "showSetupParameters");
-}
-
-void QGCApplication::_showSetupSummary(void)
-{
-    QMetaObject::invokeMethod(_rootQmlObject(), "showSetupSummary");
-}
-
-void QGCApplication::_showSetupVehicleComponent(VehicleComponent* vehicleComponent)
-{
-    QVariant varReturn;
-    QVariant varComponent = QVariant::fromValue(vehicleComponent);
-
-    QMetaObject::invokeMethod(_rootQmlObject(), "showSetupVehicleComponent", Q_RETURN_ARG(QVariant, varReturn), Q_ARG(QVariant, varComponent));
-}
 
 void QGCApplication::setLastKnownHomePosition(QGeoCoordinate& lastKnownHomePosition)
 {
