@@ -8,30 +8,24 @@
  ****************************************************************************/
 
 import QtQuick          2.5
-import QtQuick.Controls 1.3
+import QtQuick.Controls 1.4
 import QtQuick.Dialogs  1.2
 
 import QGroundControl.Palette       1.0
 import QGroundControl.Controls      1.0
 import QGroundControl.ScreenTools   1.0
+import QGroundControl.Controllers   1.0
 
 AnalyzePage {
     id:                 geoTagPage
     pageComponent:      pageComponent
     pageName:           qsTr("GeoTag Images (WIP)")
-    pageDescription:    qsTr("GetTag Images is used to geotag a set of images from a survey mission with gps coordinates. You must provide the binary log from the flight as well as the directory which contains the images to tag.")
+    pageDescription:    qsTr("GetTag Images is used to tag a set of images from a survey mission with gps coordinates. You must provide the binary log from the flight as well as the directory which contains the images to tag.")
 
     property real _margin: ScreenTools.defaultFontPixelWidth
 
-    FileDialog {
-        id: fileDialog
-
-        property var textField
-
-        onAccepted: {
-            console.log(fileDialog.fileUrl)
-            textField.text = fileDialog.fileUrl
-        }
+    GeoTagController {
+        id: controller
     }
 
     Component {
@@ -50,16 +44,12 @@ AnalyzePage {
                 }
 
                 QGCLabel {
-                    id: logFilePath
+                    text: controller.logFile
                 }
 
                 QGCButton {
-                    text: qsTr("Select log file")
-                    onClicked: {
-                        fileDialog.textField = logFilePath
-                        fileDialog.selectFolder = false
-                        fileDialog.open()
-                    }
+                    text:       qsTr("Select log file")
+                    onClicked:  controller.pickLogFile()
                 }
             }
 
@@ -71,29 +61,42 @@ AnalyzePage {
                 }
 
                 QGCLabel {
-                    id: imageDirectory
+                    text: controller.imageDirectory
                 }
 
                 QGCButton {
-                    text: qsTr("Select image directory")
-                    onClicked: {
-                        fileDialog.textField = imageDirectory
-                        fileDialog.selectFolder = true
-                        fileDialog.open()
+                    text:       qsTr("Select image directory")
+                    onClicked:  controller.pickImageDirectory()
+                }
+            }
+
+            QGCLabel { text: "NYI - Simulated only" }
+
+            QGCButton {
+                text: controller.inProgress ? qsTr("Cancel Tagging") : qsTr("Start Tagging")
+
+                onClicked: {
+                    if (controller.inProgress) {
+                        controller.cancelTagging()
+                    } else {
+                        if (controller.logFile == "" || controller.imageDirectory == "") {
+                            geoTagPage.showMessage(qsTr("Error"), qsTr("You must select a log file and image directory before you can start tagging."), StandardButton.Ok)
+                            return
+                        }
+                        controller.startTagging()
                     }
                 }
             }
 
-            QGCButton {
-                text: qsTr("GeoTag")
+            QGCLabel {
+                text: controller.errorMessage
+            }
 
-                onClicked: {
-                    if (logFilePath.text == "" || imageDirectory.text == "") {
-                        geoTagPage.showMessage(qsTr("Error"), qsTr("You must select a log file and image directory before you can GeoTag."), StandardButton.Ok)
-                        return
-                    }
-                    geoTagPage.showMessage(qsTr("GeoTag call"), qsTr("This is where the geotag call would be made"), StandardButton.Ok)
-                }
+            ProgressBar {
+                anchors.left:   parent.left
+                anchors.right:  parent.right
+                maximumValue:   100
+                value:          controller.progress
             }
         } // Column
     } // Component

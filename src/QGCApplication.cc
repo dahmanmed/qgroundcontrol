@@ -107,6 +107,7 @@
     #include "QGCMessageBox.h"
     #include "FirmwareUpgradeController.h"
     #include "MainWindow.h"
+    #include "GeoTagController.h"
 #endif
 
 #ifdef QGC_RTLAB_ENABLED
@@ -413,6 +414,7 @@ void QGCApplication::_initCommon(void)
     qmlRegisterType<CustomCommandWidgetController>  ("QGroundControl.Controllers", 1, 0, "CustomCommandWidgetController");
     qmlRegisterType<FirmwareUpgradeController>      ("QGroundControl.Controllers", 1, 0, "FirmwareUpgradeController");
     qmlRegisterType<LogDownloadController>          ("QGroundControl.Controllers", 1, 0, "LogDownloadController");
+    qmlRegisterType<GeoTagController>               ("QGroundControl.Controllers", 1, 0, "GeoTagController");
 #endif
 
     // Register Qml Singletons

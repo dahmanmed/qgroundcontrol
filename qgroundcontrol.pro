@@ -212,6 +212,7 @@ INCLUDEPATH += .
 INCLUDEPATH += \
     include/ui \
     src \
+    src/AnalyzeView \
     src/audio \
     src/AutoPilotPlugins \
     src/comm \
@@ -371,6 +372,7 @@ HEADERS += \
 
 !MobileBuild {
 HEADERS += \
+    src/AnalyzeView/GeoTagController.h \
     src/comm/LogReplayLink.h \
     src/comm/QGCFlightGearLink.h \
     src/comm/QGCHilLink.h \
@@ -525,6 +527,7 @@ contains(DEFINES, QGC_ENABLE_BLUETOOTH) {
 
 !MobileBuild {
 SOURCES += \
+    src/AnalyzeView/GeoTagController.cc \
     src/ui/uas/UASMessageView.cc \
     src/uas/FileManager.cc \
     src/ui/uas/QGCUnconnectedInfoWidget.cc \

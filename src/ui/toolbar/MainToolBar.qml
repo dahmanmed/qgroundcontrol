@@ -376,7 +376,7 @@ Rectangle {
             anchors.top:        parent.top
             anchors.bottom:     parent.bottom
             exclusiveGroup:     mainActionGroup
-            source:             "/qmlimages/Gears.svg"
+            source:             "/qmlimages/Analyze.svg"
             visible:            !ScreenTools.isMobile
             onClicked:          toolBar.showAnalyzeView()
         }

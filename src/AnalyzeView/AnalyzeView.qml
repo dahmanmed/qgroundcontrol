@@ -89,7 +89,7 @@ Rectangle {
 
             SubMenuButton {
                 id:             summaryButton
-                imageResource: "/qmlimages/VehicleSummaryIcon.png"
+                imageResource: "/qmlimages/GeoTagIcon.png"
                 setupIndicator: false
                 checked:        true
                 exclusiveGroup: setupButtonGroup
