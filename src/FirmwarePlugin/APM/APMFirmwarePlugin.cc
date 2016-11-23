@@ -589,6 +589,8 @@ void APMFirmwarePlugin::initializeVehicle(Vehicle* vehicle)
             break;
         }
     } else {
+#if 0
+// FIXME: Hack
         // Streams are not started automatically on APM stack
         vehicle->requestDataStream(MAV_DATA_STREAM_RAW_SENSORS,     2);
         vehicle->requestDataStream(MAV_DATA_STREAM_EXTENDED_STATUS, 2);
@@ -597,6 +599,7 @@ void APMFirmwarePlugin::initializeVehicle(Vehicle* vehicle)
         vehicle->requestDataStream(MAV_DATA_STREAM_EXTRA1,          10);
         vehicle->requestDataStream(MAV_DATA_STREAM_EXTRA2,          10);
         vehicle->requestDataStream(MAV_DATA_STREAM_EXTRA3,          3);
+#endif
     }
 }
 

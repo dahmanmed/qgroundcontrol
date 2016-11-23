@@ -156,6 +156,7 @@ void UDPLink::_writeBytes(const QByteArray data)
                     goneHosts.append(host);
                 }
             } else {
+                qDebug() << "UDPLink::_writeBytes" << currentHost << data.count();
                 // Only log rate if data actually got sent. Not sure about this as
                 // "host not there" takes time too regardless of size of data. In fact,
                 // 1 byte or "UDP frame size" bytes are the same as that's the data
