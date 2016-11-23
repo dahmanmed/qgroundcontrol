@@ -111,6 +111,8 @@ void ParameterManager::_parameterUpdate(int vehicleId, int componentId, QString 
                                             "value:" << value <<
                                             ")";
 
+    _initialRequestTimeoutTimer.stop();
+
 #if 0
     // Handy for testing retry logic
     static int counter = 0;
