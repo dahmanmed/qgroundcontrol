@@ -42,6 +42,7 @@ Rectangle {
     signal showPlanView
     signal showFlyView
     signal showAnalyzeView
+    signal showMultiVehicleView
 
     MainToolBarController { id: _controller }
 
@@ -63,6 +64,11 @@ Rectangle {
 
     function checkAnalyzeButton() {
         analyzeButton.checked = true
+    }
+
+    function checkNoButtons() {
+        analyzeButton.checked = true
+        analyzeButton.checked = false
     }
 
     function getBatteryColor() {
@@ -406,6 +412,15 @@ Rectangle {
                 }
             }
 
+            Component {
+                id: multiVehicleViewMenuItemComponent
+
+                MenuItem {
+                    text:           "All Vehicles View"
+                    onTriggered:    showMultiVehicleView()
+                }
+            }
+
             property var vehicleMenuItems: []
 
             function updateVehicleMenu() {
@@ -422,6 +437,11 @@ Rectangle {
                     vehicleMenuItems.push(menuItem)
                     vehicleMenu.insertItem(i, menuItem)
                 }
+
+                // Add Multi-Vehicle View menu item
+                var menuItem = multiVehicleViewMenuItemComponent.createObject(null)
+                vehicleMenuItems.push(menuItem)
+                vehicleMenu.insertItem(QGroundControl.multiVehicleManager.vehicles.count, menuItem)
             }
 
             Component.onCompleted: updateVehicleMenu()

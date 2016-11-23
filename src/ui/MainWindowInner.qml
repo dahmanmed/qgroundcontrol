@@ -40,12 +40,13 @@ Item {
     property var    activeVehicle:      QGroundControl.multiVehicleManager.activeVehicle
     property string formatedMessage:    activeVehicle ? activeVehicle.formatedMessage : ""
 
-    property var _viewList: [ settingsViewLoader, setupViewLoader, planViewLoader, flightView, analyzeViewLoader ]
+    property var _viewList: [ settingsViewLoader, setupViewLoader, planViewLoader, flightView, analyzeViewLoader, multiVehicleViewLoader ]
 
-    readonly property string _settingsViewSource:   "AppSettings.qml"
-    readonly property string _setupViewSource:      "SetupView.qml"
-    readonly property string _planViewSource:       "MissionEditor.qml"
-    readonly property string _analyzeViewSource:    "AnalyzeView.qml"
+    readonly property string _settingsViewSource:       "AppSettings.qml"
+    readonly property string _setupViewSource:          "SetupView.qml"
+    readonly property string _planViewSource:           "MissionEditor.qml"
+    readonly property string _analyzeViewSource:        "AnalyzeView.qml"
+    readonly property string _multiVehicleViewSource:   "MultiVehicleView.qml"
 
     onHeightChanged: {
         //-- We only deal with the available height if within the Fly or Plan view
@@ -115,13 +116,24 @@ Item {
         if(currentPopUp) {
             currentPopUp.close()
         }
-        ScreenTools.availableHeight = 0
         if (analyzeViewLoader.source  != _analyzeViewSource) {
             analyzeViewLoader.source  = _analyzeViewSource
         }
         hideAllViews()
         analyzeViewLoader.visible = true
         toolBar.checkAnalyzeButton()
+    }
+
+    function showMultiVehicleView() {
+        if (currentPopUp) {
+            currentPopUp.close()
+        }
+        if (multiVehicleViewLoader.source  != _multiVehicleViewSource) {
+            multiVehicleViewLoader.source  = _multiVehicleViewSource
+        }
+        hideAllViews()
+        multiVehicleViewLoader.visible = true
+        toolBar.checkNoButtons()
     }
 
     /// Start the process of closing QGroundControl. Prompts the user are needed.
@@ -259,22 +271,21 @@ Item {
     //-- Main UI
 
     MainToolBar {
-        id:                 toolBar
-        height:             tbHeight
-        anchors.left:       parent.left
-        anchors.right:      parent.right
-        anchors.top:        parent.top
-        mainWindow:         mainWindow
-        isBackgroundDark:   flightView.isBackgroundDark
-        z:                  QGroundControl.zOrderTopMost
-        onShowSettingsView: mainWindow.showSettingsView()
-        onShowSetupView:    mainWindow.showSetupView()
-        onShowPlanView:     mainWindow.showPlanView()
-        onShowFlyView:      mainWindow.showFlyView()
-        onShowAnalyzeView:  mainWindow.showAnalyzeView()
-        Component.onCompleted: {
-            ScreenTools.availableHeight = parent.height - toolBar.height
-        }
+        id:                     toolBar
+        height:                 tbHeight
+        anchors.left:           parent.left
+        anchors.right:          parent.right
+        anchors.top:            parent.top
+        mainWindow:             mainWindow
+        isBackgroundDark:       flightView.isBackgroundDark
+        z:                      QGroundControl.zOrderTopMost
+        onShowSettingsView:     mainWindow.showSettingsView()
+        onShowSetupView:        mainWindow.showSetupView()
+        onShowPlanView:         mainWindow.showPlanView()
+        onShowFlyView:          mainWindow.showFlyView()
+        onShowAnalyzeView:      mainWindow.showAnalyzeView()
+        onShowMultiVehicleView: mainWindow.showMultiVehicleView()
+        Component.onCompleted:  ScreenTools.availableHeight = parent.height - toolBar.height
     }
 
     Loader {
@@ -316,6 +327,15 @@ Item {
 
     Loader {
         id:                 analyzeViewLoader
+        anchors.left:       parent.left
+        anchors.right:      parent.right
+        anchors.top:        toolBar.bottom
+        anchors.bottom:     parent.bottom
+        visible:            false
+    }
+
+    Loader {
+        id:                 multiVehicleViewLoader
         anchors.left:       parent.left
         anchors.right:      parent.right
         anchors.top:        toolBar.bottom
