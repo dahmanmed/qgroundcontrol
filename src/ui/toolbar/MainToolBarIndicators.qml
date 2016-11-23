@@ -20,7 +20,8 @@ import QGroundControl.ScreenTools   1.0
 import QGroundControl.Palette       1.0
 
 Row {
-    spacing:  tbSpacing * 2
+    id:         root
+    spacing:    tbSpacing * 2
 
     QGCPalette { id: qgcPal }
 
@@ -65,6 +66,10 @@ Row {
             }
         }
         return "N/A"
+    }
+
+    function showMultiVehicleView() {
+        mainToolbar.showMultiVehicleView()
     }
 
     //-------------------------------------------------------------------------
@@ -281,11 +286,19 @@ Row {
             id: vehicleMenuItemComponent
 
             MenuItem {
-                checkable:      true
-                onTriggered:    QGroundControl.multiVehicleManager.activeVehicle = vehicle
+                onTriggered: QGroundControl.multiVehicleManager.activeVehicle = vehicle
 
                 property int vehicleId: Number(text.split(" ")[1])
                 property var vehicle:   QGroundControl.multiVehicleManager.getVehicleById(vehicleId)
+            }
+        }
+
+        Component {
+            id: multiVehicleViewMenuItemComponent
+
+            MenuItem {
+                text:           "All Vehicles View"
+                onTriggered:    showMultiVehicleView()
             }
         }
 
@@ -305,6 +318,11 @@ Row {
                 vehicleMenuItems.push(menuItem)
                 vehicleMenu.insertItem(i, menuItem)
             }
+
+            // Add Multi-Vehicle View menu item
+            var menuItem = multiVehicleViewMenuItemComponent.createObject(null)
+            vehicleMenuItems.push(menuItem)
+            vehicleMenu.insertItem(QGroundControl.multiVehicleManager.vehicles.count, menuItem)
         }
 
         Component.onCompleted: updateVehicleMenu()

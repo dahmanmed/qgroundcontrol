@@ -50,6 +50,7 @@ Rectangle {
     signal showPlanView
     signal showFlyView
     signal showAnalyzeView
+    signal showMultiVehicleView
 
     MainToolBarController { id: _controller }
 
@@ -71,6 +72,11 @@ Rectangle {
 
     function checkAnalyzeButton() {
         analyzeButton.checked = true
+    }
+
+    function checkNoButtons() {
+        analyzeButton.checked = true
+        analyzeButton.checked = false
     }
 
     function getBatteryColor() {
@@ -397,6 +403,8 @@ Rectangle {
             source:                 activeVehicle && !parent.vehicleConnectionLost ? "MainToolBarIndicators.qml" : ""
             anchors.left:           parent.left
             anchors.verticalCenter: parent.verticalCenter
+
+            property var mainToolbar: vehicleIndicators.parent
         }
 
         QGCLabel {
