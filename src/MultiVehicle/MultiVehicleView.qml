@@ -23,7 +23,10 @@ QGCView {
     id:         qgcView
     viewPanel:  panel
 
-    property real _margins: ScreenTools.defaultFontPixelWidth
+    property real   _margins: ScreenTools.defaultFontPixelWidth
+    property var    _fileDialogController
+
+    readonly property string _loadingText: qsTr("Loading...")
 
     QGCPalette { id: qgcPal; colorGroupEnabled: enabled }
 
@@ -66,24 +69,15 @@ QGCView {
 
                                 property bool missionAvailable: visualItems && visualItems.count > 1
 
-                                /*
-                            function loadFromSelectedFile() {
-                                if (ScreenTools.isMobile) {
-                                    qgcView.showDialog(mobileFilePicker, qsTr("Select Mission File"), qgcView.showDialogDefaultWidth, StandardButton.Yes | StandardButton.Cancel)
-                                } else {
-                                    missionController.loadFromFilePicker()
-                                    fitMapViewportToMissionItems()
-                                    _currentMissionItem = _visualItems.get(0)
+                                function loadFromSelectedFile() {
+                                    if (ScreenTools.isMobile) {
+                                        _fileDialogController = missionController
+                                        qgcView.showDialog(mobileFilePicker, qsTr("Select Mission File"), qgcView.showDialogDefaultWidth, StandardButton.Yes | StandardButton.Cancel)
+                                    } else {
+                                        missionController.loadFromFilePicker()
+                                        missionController.sendToVehicle()
+                                    }
                                 }
-                            }
-
-                            function saveToSelectedFile() {
-                                if (ScreenTools.isMobile) {
-                                    qgcView.showDialog(mobileFileSaver, qsTr("Save Mission File"), qgcView.showDialogDefaultWidth, StandardButton.Save | StandardButton.Cancel)
-                                } else {
-                                    missionController.saveToFilePicker()
-                                }
-                            } */
                             } // MissionController
 
                             GeoFenceController {
@@ -93,23 +87,15 @@ QGCView {
 
                                 property bool fenceAvailable: fenceSupported && (circleSupported || polygonSupported)
 
-                                /*
-                            function saveToSelectedFile() {
-                                if (ScreenTools.isMobile) {
-                                    qgcView.showDialog(mobileFileSaver, qsTr("Save Fence File"), qgcView.showDialogDefaultWidth, StandardButton.Save | StandardButton.Cancel)
-                                } else {
-                                    geoFenceController.saveToFilePicker()
+                                function loadFromSelectedFile() {
+                                    if (ScreenTools.isMobile) {
+                                        _fileDialogController = geoFenceController
+                                        qgcView.showDialog(mobileFilePicker, qsTr("Select Fence File"), qgcView.showDialogDefaultWidth, StandardButton.Yes | StandardButton.Cancel)
+                                    } else {
+                                        geoFenceController.loadFromFilePicker()
+                                        geoFenceController.sendToVehicle()
+                                    }
                                 }
-                            }
-
-                            function loadFromSelectedFile() {
-                                if (ScreenTools.isMobile) {
-                                    qgcView.showDialog(mobileFilePicker, qsTr("Select Fence File"), qgcView.showDialogDefaultWidth, StandardButton.Yes | StandardButton.Cancel)
-                                } else {
-                                    geoFenceController.loadFromFilePicker()
-                                    fitMapViewportToFenceItems()
-                                }
-                            }*/
                             } // GeoFenceController
 
                             RallyPointController {
@@ -119,23 +105,15 @@ QGCView {
 
                                 property bool pointsAvailable: rallyPointsSupported && points.count
 
-                                /*
-                            function saveToSelectedFile() {
-                                if (ScreenTools.isMobile) {
-                                    qgcView.showDialog(mobileFileSaver, qsTr("Save Rally Point File"), qgcView.showDialogDefaultWidth, StandardButton.Save | StandardButton.Cancel)
-                                } else {
-                                    rallyPointController.saveToFilePicker()
+                                function loadFromSelectedFile() {
+                                    if (ScreenTools.isMobile) {
+                                        _fileDialogController = rallyPointController
+                                        qgcView.showDialog(mobileFilePicker, qsTr("Select Rally Point File"), qgcView.showDialogDefaultWidth, StandardButton.Yes | StandardButton.Cancel)
+                                    } else {
+                                        rallyPointController.loadFromFilePicker()
+                                        rallyPointController.sendToVehicle()
+                                    }
                                 }
-                            }
-
-                            function loadFromSelectedFile() {
-                                if (ScreenTools.isMobile) {
-                                    qgcView.showDialog(mobileFilePicker, qsTr("Select Rally Point File"), qgcView.showDialogDefaultWidth, StandardButton.Yes | StandardButton.Cancel)
-                                } else {
-                                    rallyPointController.loadFromFilePicker()
-                                    fitMapViewportToRallyItems()
-                                }
-                            }*/
                             } // RallyPointController
 
                             QGCLabel {
@@ -192,7 +170,13 @@ QGCView {
                                             anchors.margins:    _margins / 2
                                             anchors.left:       parent.left
                                             anchors.top:        parent.top
-                                            text:               qsTr("Mission")
+                                            text:               missionController.syncInProgress ? _loadingText : qsTr("Mission")
+                                        }
+
+                                        MouseArea {
+                                            anchors.fill:   parent
+                                            enabled:        !missionController.syncInProgress
+                                            onClicked:      missionController.loadFromSelectedFile()
                                         }
                                     }
 
@@ -209,7 +193,13 @@ QGCView {
                                             anchors.margins:    _margins / 2
                                             anchors.left:       parent.left
                                             anchors.top:        parent.top
-                                            text:               qsTr("Fence")
+                                            text:               geoFenceController.syncInProgress ? _loadingText : qsTr("Fence")
+                                        }
+
+                                        MouseArea {
+                                            anchors.fill:   parent
+                                            enabled:        !geoFenceController.syncInProgress
+                                            onClicked:      geoFenceController.loadFromSelectedFile()
                                         }
                                     }
 
@@ -226,7 +216,13 @@ QGCView {
                                             anchors.margins:    _margins / 2
                                             anchors.left:       parent.left
                                             anchors.top:        parent.top
-                                            text:               qsTr("Rally")
+                                            text:               rallyPointController.syncInProgress ? _loadingText : qsTr("Rally")
+                                        }
+
+                                        MouseArea {
+                                            anchors.fill:   parent
+                                            enabled:        !rallyPointController.syncInProgress
+                                            onClicked:      rallyPointController.loadFromSelectedFile()
                                         }
                                     }
 
@@ -241,4 +237,18 @@ QGCView {
             } // QGCFlickable
         } // Rectangle - View background
     } // QGCViewPanel
-} // QGCVIew
+
+    Component {
+        id: mobileFilePicker
+
+        QGCMobileFileDialog {
+            openDialog:         true
+            fileExtension:      _fileDialogController.fileExtension
+
+            onFilenameReturned: {
+                _fileDialogController.loadFromFile(filename)
+                _fileDialogController.sendToVehicle()
+            }
+        }
+    }
+} // QGCView
