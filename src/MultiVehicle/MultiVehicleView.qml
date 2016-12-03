@@ -123,113 +123,101 @@ QGCView {
                             Rectangle {
                                 anchors.left:   parent.left
                                 anchors.right:  parent.right
-                                height:         (lostConnectionRow.visible ? lostConnectionRow.height : indicatorRow.height )+ (_margins * 2)
+                                height:         vehicleDisplayColumn.height + (_margins * 2)
                                 color:          qgcPal.windowShade
 
-                                Row {
-                                    id:                 lostConnectionRow
-                                    spacing:            _margins
-                                    anchors.margins:    _margins
-                                    anchors.right:      parent.right
-                                    anchors.top:        parent.top
-                                    layoutDirection:    Qt.RightToLeft
-                                    visible:            object.connectionLost
-
-                                    QGCButton {
-                                        text:       qsTr("Disconnect")
-                                        onClicked:  object.disconnectInactiveVehicle()
-                                    }
-
-                                    QGCLabel {
-                                        text:                   qsTr("COMMUNICATION LOST")
-                                        font.pointSize:         ScreenTools.largeFontPointSize
-                                        font.family:            ScreenTools.demiboldFontFamily
-                                        color:                  "red"
-                                        anchors.verticalCenter: parent.verticalCenter
-                                    }
-                                }
-
-                                Row {
-                                    id:                 indicatorRow
+                                Column {
+                                    id:                 vehicleDisplayColumn
                                     anchors.margins:    _margins
                                     anchors.left:       parent.left
+                                    anchors.right:      parent.right
                                     anchors.top:        parent.top
-                                    spacing:            _margins
-                                    visible:            !object.connectionLost
 
-                                    Rectangle {
-                                        width:          missionLabel.contentWidth + _margins
-                                        height:         ScreenTools.defaultFontPixelHeight + _margins
-                                        radius:         height / 4
-                                        color:          missionController.missionAvailable ? "green" : qgcPal.window
-                                        border.width:   1
-                                        border.color:   qgcPal.text
-
-                                        QGCLabel {
-                                            id:                 missionLabel
-                                            anchors.margins:    _margins / 2
-                                            anchors.left:       parent.left
-                                            anchors.top:        parent.top
-                                            text:               missionController.syncInProgress ? _loadingText : qsTr("Mission")
-                                        }
-
-                                        MouseArea {
-                                            anchors.fill:   parent
-                                            enabled:        !missionController.syncInProgress
-                                            onClicked:      missionController.loadFromSelectedFile()
-                                        }
+                                    MainToolBarIndicators {
+                                        height:         ScreenTools.defaultFontPixelHeight * 3
+                                        anchors.left:   parent.left
+                                        anchors.right:  parent.right
                                     }
 
-                                    Rectangle {
-                                        width:          fenceLabel.contentWidth + _margins
-                                        height:         ScreenTools.defaultFontPixelHeight + _margins
-                                        radius:         height / 4
-                                        color:          geoFenceController.fenceAvailable ? "green" : qgcPal.window
-                                        border.width:   1
-                                        border.color:   qgcPal.text
+                                    Row {
+                                        id:                 indicatorRow
+                                        spacing:            _margins
+                                        visible:            !object.connectionLost
 
-                                        QGCLabel {
-                                            id:                 fenceLabel
-                                            anchors.margins:    _margins / 2
-                                            anchors.left:       parent.left
-                                            anchors.top:        parent.top
-                                            text:               geoFenceController.syncInProgress ? _loadingText : qsTr("Fence")
+                                        Rectangle {
+                                            width:          missionLabel.contentWidth + _margins
+                                            height:         ScreenTools.defaultFontPixelHeight + _margins
+                                            radius:         height / 4
+                                            color:          missionController.missionAvailable ? "green" : qgcPal.window
+                                            border.width:   1
+                                            border.color:   qgcPal.text
+
+                                            QGCLabel {
+                                                id:                 missionLabel
+                                                anchors.margins:    _margins / 2
+                                                anchors.left:       parent.left
+                                                anchors.top:        parent.top
+                                                text:               missionController.syncInProgress ? _loadingText : qsTr("Mission")
+                                            }
+
+                                            MouseArea {
+                                                anchors.fill:   parent
+                                                enabled:        !missionController.syncInProgress
+                                                onClicked:      missionController.loadFromSelectedFile()
+                                            }
                                         }
 
-                                        MouseArea {
-                                            anchors.fill:   parent
-                                            enabled:        !geoFenceController.syncInProgress
-                                            onClicked:      geoFenceController.loadFromSelectedFile()
+                                        Rectangle {
+                                            width:          fenceLabel.contentWidth + _margins
+                                            height:         ScreenTools.defaultFontPixelHeight + _margins
+                                            radius:         height / 4
+                                            color:          geoFenceController.fenceAvailable ? "green" : qgcPal.window
+                                            border.width:   1
+                                            border.color:   qgcPal.text
+
+                                            QGCLabel {
+                                                id:                 fenceLabel
+                                                anchors.margins:    _margins / 2
+                                                anchors.left:       parent.left
+                                                anchors.top:        parent.top
+                                                text:               geoFenceController.syncInProgress ? _loadingText : qsTr("Fence")
+                                            }
+
+                                            MouseArea {
+                                                anchors.fill:   parent
+                                                enabled:        !geoFenceController.syncInProgress
+                                                onClicked:      geoFenceController.loadFromSelectedFile()
+                                            }
                                         }
-                                    }
 
-                                    Rectangle {
-                                        width:          rallyLabel.contentWidth + _margins
-                                        height:         ScreenTools.defaultFontPixelHeight + _margins
-                                        radius:         height / 4
-                                        color:          rallyPointController.pointsAvailable ? "green" : qgcPal.window
-                                        border.width:   1
-                                        border.color:   qgcPal.text
+                                        Rectangle {
+                                            width:          rallyLabel.contentWidth + _margins
+                                            height:         ScreenTools.defaultFontPixelHeight + _margins
+                                            radius:         height / 4
+                                            color:          rallyPointController.pointsAvailable ? "green" : qgcPal.window
+                                            border.width:   1
+                                            border.color:   qgcPal.text
 
-                                        QGCLabel {
-                                            id:                 rallyLabel
-                                            anchors.margins:    _margins / 2
-                                            anchors.left:       parent.left
-                                            anchors.top:        parent.top
-                                            text:               rallyPointController.syncInProgress ? _loadingText : qsTr("Rally")
+                                            QGCLabel {
+                                                id:                 rallyLabel
+                                                anchors.margins:    _margins / 2
+                                                anchors.left:       parent.left
+                                                anchors.top:        parent.top
+                                                text:               rallyPointController.syncInProgress ? _loadingText : qsTr("Rally")
+                                            }
+
+                                            MouseArea {
+                                                anchors.fill:   parent
+                                                enabled:        !rallyPointController.syncInProgress
+                                                onClicked:      rallyPointController.loadFromSelectedFile()
+                                            }
                                         }
 
-                                        MouseArea {
-                                            anchors.fill:   parent
-                                            enabled:        !rallyPointController.syncInProgress
-                                            onClicked:      rallyPointController.loadFromSelectedFile()
-                                        }
-                                    }
+                                        FlightModeDropdown { activeVehicle: object }
 
-                                    FlightModeDropdown { activeVehicle: object }
-
-                                    GuidedBar { activeVehicle: object }
-                                } // Row - contents display
+                                        GuidedBar { activeVehicle: object }
+                                    } // Row - contents display
+                                } // Column
                             } // Rectangle - contents display
                         } // Column - layout for vehicle
                     } // Repeater - vehicle repeater
