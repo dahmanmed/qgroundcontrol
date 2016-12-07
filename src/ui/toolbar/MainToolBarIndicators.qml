@@ -259,6 +259,11 @@ Item {
                 anchors.fill:   parent
                 onClicked:      mainWindow.showPopUp(batteryInfo, mapToItem(toolBar, x, y).x + (width / 2))
             }
+
+            // Add Multi-Vehicle View menu item
+            var menuItem = multiVehicleViewMenuItemComponent.createObject(null)
+            vehicleMenuItems.push(menuItem)
+            vehicleMenu.insertItem(QGroundControl.multiVehicleManager.vehicles.count, menuItem)
         }
 
         //-------------------------------------------------------------------------
