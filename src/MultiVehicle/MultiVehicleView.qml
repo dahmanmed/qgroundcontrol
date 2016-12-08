@@ -17,6 +17,7 @@ import QGroundControl.ScreenTools   1.0
 import QGroundControl.Controls      1.0
 import QGroundControl.Palette       1.0
 import QGroundControl.Controllers   1.0
+import QGroundControl.FactSystem    1.0
 
 /// Multi-Vehicle View
 QGCView {
@@ -133,12 +134,6 @@ QGCView {
                                     anchors.right:      parent.right
                                     anchors.top:        parent.top
 
-                                    MainToolBarIndicators {
-                                        height:         ScreenTools.defaultFontPixelHeight * 3
-                                        anchors.left:   parent.left
-                                        anchors.right:  parent.right
-                                    }
-
                                     Row {
                                         id:                 indicatorRow
                                         spacing:            _margins
@@ -217,6 +212,37 @@ QGCView {
 
                                         GuidedBar { activeVehicle: object }
                                     } // Row - contents display
+
+                                    Flow {
+                                        anchors.left:       parent.left
+                                        anchors.right:      parent.right
+                                        layoutDirection:    Qt.LeftToRight
+                                        spacing:            _margins
+
+                                        Repeater {
+                                            model: [ "battery.voltage", "battery.percentRemaining", "altitudeRelative", "altitudeAMSL", "groundSpeed", "heading"]
+
+                                            Column {
+                                                property Fact fact: object.getFact(modelData)
+
+                                                QGCLabel {
+                                                    anchors.horizontalCenter:    parent.horizontalCenter
+                                                    text:                       fact.shortDescription
+                                                }
+                                                Row {
+                                                    anchors.horizontalCenter:    parent.horizontalCenter
+                                                    //spacing:                    ScreenTools.defaultFontPixelWidth
+
+                                                    QGCLabel {
+                                                        text: fact.enumOrValueString
+                                                    }
+                                                    QGCLabel {
+                                                        text: fact.units
+                                                    }
+                                                }
+                                            }
+                                        } // Repeater - Small
+                                    } // Flow
                                 } // Column
                             } // Rectangle - contents display
                         } // Column - layout for vehicle

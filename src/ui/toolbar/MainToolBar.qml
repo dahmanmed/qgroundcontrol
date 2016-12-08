@@ -391,7 +391,8 @@ Rectangle {
             id:                     vehicleSelectorButton
             width:                  ScreenTools.defaultFontPixelHeight * 8
             text:                   "Vehicle " + (activeVehicle ? activeVehicle.id : "None")
-            visible:                QGroundControl.multiVehicleManager.vehicles.count > 1
+            // FIXME: Hack for testing
+            //visible:                QGroundControl.multiVehicleManager.vehicles.count > 1
             anchors.verticalCenter: parent.verticalCenter
 
             menu: vehicleMenu
