@@ -31,7 +31,8 @@ APMSensorsComponentController::APMSensorsComponentController(void) :
     _cancelButton(NULL),
     _setOrientationsButton(NULL),
     _showOrientationCalArea(false),
-    _magCalInProgress(false),
+    _offboardMagCalInProgress(false),
+    _onboardMagCalInProgress(false),
     _accelCalInProgress(false),
     _compassMotCalInProgress(false),
     _levelInProgress(false),
@@ -99,7 +100,7 @@ void APMSensorsComponentController::_startLogCalibration(void)
     if (_accelCalInProgress || _compassMotCalInProgress) {
         _nextButton->setEnabled(true);
     }
-    _cancelButton->setEnabled(false);
+    _cancelButton->setEnabled(_onboardMagCalInProgress);
 }
 
 void APMSensorsComponentController::_startVisualCalibration(void)
@@ -159,8 +160,8 @@ void APMSensorsComponentController::_stopCalibration(APMSensorsComponentControll
     if (code == StopCalibrationSuccess) {
         _resetInternalState();
         _progressBar->setProperty("value", 1);
-        if (_vehicle->parameterManager()->parameterExists(FactSystem::defaultComponentId, QStringLiteral("COMPASS_LEARN"))) {
-            _vehicle->parameterManager()->getParameter(FactSystem::defaultComponentId, QStringLiteral("COMPASS_LEARN"))->setRawValue(0);
+        if (parameterExists(FactSystem::defaultComponentId, QStringLiteral("COMPASS_LEARN"))) {
+            getParameterFact(FactSystem::defaultComponentId, QStringLiteral("COMPASS_LEARN"))->setRawValue(0);
         }
     } else {
         _progressBar->setProperty("value", 0);
@@ -194,16 +195,76 @@ void APMSensorsComponentController::_stopCalibration(APMSensorsComponentControll
         break;
     }
     
-    _magCalInProgress = false;
+    _onboardMagCalInProgress = false;
+    _offboardMagCalInProgress = false;
     _accelCalInProgress = false;
     _compassMotCalInProgress = false;
     _levelInProgress = false;
 }
 
+void APMSensorsComponentController::_mavCommandResult(int vehicleId, int component, int command, int result, bool noReponseFromVehicle)
+{
+    Q_UNUSED(component);
+    Q_UNUSED(noReponseFromVehicle);
+
+    if (_vehicle->id() == vehicleId && command == MAV_CMD_DO_CANCEL_MAG_CAL) {
+        disconnect(_vehicle, &Vehicle::mavCommandResult, this, &APMSensorsComponentController::_mavCommandResult);
+        if (result == MAV_RESULT_ACCEPTED) {
+            // Onboard mag cal is supported
+            _onboardMagCalInProgress = true;
+            _rgCompassCalProgress[0] = 0;
+            _rgCompassCalProgress[1] = 0;
+            _rgCompassCalProgress[2] = 0;
+            _rgCompassCalComplete[0] = false;
+            _rgCompassCalComplete[1] = false;
+            _rgCompassCalComplete[2] = false;
+
+            _startLogCalibration();
+            uint8_t compassBits = 0;
+            if (getParameterFact(FactSystem::defaultComponentId, "COMPASS_DEV_ID")->rawValue().toInt() > 0) {
+                compassBits |= 1 << 0;
+            } else {
+                _rgCompassCalComplete[0] = true;
+                _rgCompassCalSucceeded[0] = true;
+            }
+            if (getParameterFact(FactSystem::defaultComponentId, "COMPASS_DEV_ID2")->rawValue().toInt() > 0) {
+                compassBits |= 1 << 1;
+            } else {
+                _rgCompassCalComplete[1] = true;
+                _rgCompassCalSucceeded[1] = MAG_CAL_SUCCESS;
+            }
+            if (getParameterFact(FactSystem::defaultComponentId, "COMPASS_DEV_ID3")->rawValue().toInt() > 0) {
+                compassBits |= 1 << 2;
+            } else {
+                _rgCompassCalComplete[2] = true;
+                _rgCompassCalSucceeded[2] = MAG_CAL_SUCCESS;
+            }
+
+            _appendStatusLog(tr("Rotate the vehicle randomly around all axes until the progress bar fills all the way to the right ."));
+            _vehicle->sendMavCommand(_vehicle->defaultComponentId(),
+                                     MAV_CMD_DO_START_MAG_CAL,
+                                     true,          // showError
+                                     compassBits,   // which compass(es) to calibrate
+                                     0,             // no retry on failure
+                                     1,             // save values after complete
+                                     0,             // no delayed start
+                                     0);            // no auto-reboot
+
+        } else {
+            // Onboard mag cal is not supported
+            _compassCal.startCalibration();
+        }
+    }
+}
+
 void APMSensorsComponentController::calibrateCompass(void)
 {
-    _startLogCalibration();
-    _compassCal.startCalibration();
+    // First we need to determine if the vehicle support onboard compass cal. There isn't an easy way to
+    // do this. A hack is to send the mag cancel command and see if it is accepted.
+    connect(_vehicle, &Vehicle::mavCommandResult, this, &APMSensorsComponentController::_mavCommandResult);
+    _vehicle->sendMavCommand(_vehicle->defaultComponentId(), MAV_CMD_DO_CANCEL_MAG_CAL, false /* showError */);
+
+    // Now we wait for the result to come back
 }
 
 void APMSensorsComponentController::calibrateAccel(void)
@@ -252,8 +313,7 @@ void APMSensorsComponentController::_handleUASTextMessage(int uasId, int compId,
         QString percent = text.split("<").last().split(">").first();
         bool ok;
         int p = percent.toInt(&ok);
-        if (ok) {
-            Q_ASSERT(_progressBar);
+        if (ok && _progressBar) {
             _progressBar->setProperty("value", (float)(p / 100.0));
         }
         return;
@@ -325,7 +385,7 @@ void APMSensorsComponentController::_handleUASTextMessage(int uasId, int compId,
                 _orientationCalTailDownSideVisible = true;
                 _orientationCalNoseDownSideVisible = true;
             } else if (text == "mag") {
-                _magCalInProgress = true;
+                _offboardMagCalInProgress = true;
                 _orientationCalDownSideVisible = true;
                 _orientationCalUpsideDownSideVisible = true;
                 _orientationCalLeftSideVisible = true;
@@ -349,37 +409,37 @@ void APMSensorsComponentController::_handleUASTextMessage(int uasId, int compId,
         
         if (side == QLatin1Literal("down")) {
             _orientationCalDownSideInProgress = true;
-            if (_magCalInProgress) {
+            if (_offboardMagCalInProgress) {
                 _orientationCalDownSideRotate = true;
             }
         } else if (side == QLatin1Literal("up")) {
             _orientationCalUpsideDownSideInProgress = true;
-            if (_magCalInProgress) {
+            if (_offboardMagCalInProgress) {
                 _orientationCalUpsideDownSideRotate = true;
             }
         } else if (side == QLatin1Literal("left")) {
             _orientationCalLeftSideInProgress = true;
-            if (_magCalInProgress) {
+            if (_offboardMagCalInProgress) {
                 _orientationCalLeftSideRotate = true;
             }
         } else if (side == QLatin1Literal("right")) {
             _orientationCalRightSideInProgress = true;
-            if (_magCalInProgress) {
+            if (_offboardMagCalInProgress) {
                 _orientationCalRightSideRotate = true;
             }
         } else if (side == QLatin1Literal("front")) {
             _orientationCalNoseDownSideInProgress = true;
-            if (_magCalInProgress) {
+            if (_offboardMagCalInProgress) {
                 _orientationCalNoseDownSideRotate = true;
             }
         } else if (side == QLatin1Literal("back")) {
             _orientationCalTailDownSideInProgress = true;
-            if (_magCalInProgress) {
+            if (_offboardMagCalInProgress) {
                 _orientationCalTailDownSideRotate = true;
             }
         }
         
-        if (_magCalInProgress) {
+        if (_offboardMagCalInProgress) {
             _orientationCalAreaHelpText->setProperty("text", "Rotate the vehicle continuously as shown in the diagram until marked as Completed");
         } else {
             _orientationCalAreaHelpText->setProperty("text", "Hold still in the current orientation");
@@ -472,17 +532,23 @@ void APMSensorsComponentController::_hideAllCalAreas(void)
 
 void APMSensorsComponentController::cancelCalibration(void)
 {
-    _waitingForCancel = true;
-    emit waitingForCancelChanged();
     _cancelButton->setEnabled(false);
 
-    if (_magCalInProgress) {
+    if (_offboardMagCalInProgress) {
+        _waitingForCancel = true;
+        emit waitingForCancelChanged();
         _compassCal.cancelCalibration();
+    } else if (_onboardMagCalInProgress) {
+        _vehicle->sendMavCommand(_vehicle->defaultComponentId(), MAV_CMD_DO_CANCEL_MAG_CAL, true /* showError */);
+        _stopCalibration(StopCalibrationCancelled);
     } else {
+        _waitingForCancel = true;
+        emit waitingForCancelChanged();
         // The firmware doesn't always allow us to cancel calibration. The best we can do is wait
         // for it to timeout.
         _uas->stopCalibration();
     }
+
 }
 
 void APMSensorsComponentController::nextClicked(void)
@@ -520,15 +586,9 @@ bool APMSensorsComponentController::usingUDPLink(void)
     return _vehicle->priorityLink()->getLinkConfiguration()->type() == LinkConfiguration::TypeUdp;
 }
 
-void APMSensorsComponentController::_mavlinkMessageReceived(LinkInterface* link, mavlink_message_t message)
+void APMSensorsComponentController::_handleCommandAck(mavlink_message_t& message)
 {
-    Q_UNUSED(link);
-
-    if (message.sysid != _vehicle->id()) {
-        return;
-    }
-
-    if (message.msgid == MAVLINK_MSG_ID_COMMAND_ACK && _levelInProgress) {
+    if (_levelInProgress) {
         mavlink_command_ack_t commandAck;
         mavlink_msg_command_ack_decode(&message, &commandAck);
 
@@ -544,5 +604,91 @@ void APMSensorsComponentController::_mavlinkMessageReceived(LinkInterface* link,
                 break;
             }
         }
+    }
+}
+
+void APMSensorsComponentController::_handleMagCalProgress(mavlink_message_t& message)
+{
+    if (_onboardMagCalInProgress) {
+        mavlink_mag_cal_progress_t magCalProgress;
+        mavlink_msg_mag_cal_progress_decode(&message, &magCalProgress);
+
+        qCDebug(APMSensorsComponentControllerLog) << "_handleMagCalProgress id:mask:pct"
+                                                  << magCalProgress.compass_id << magCalProgress.cal_mask << magCalProgress.completion_pct;
+
+        // How many compasses are we calibrating?
+        int compassCalCount = 0;
+        for (int i=0; i<3; i++) {
+            if (magCalProgress.cal_mask & (1 << i)) {
+                compassCalCount++;
+            }
+        }
+
+        if (magCalProgress.compass_id < 3) {
+            // Each compass gets a portion of the overall progress
+            _rgCompassCalProgress[magCalProgress.compass_id] = magCalProgress.completion_pct / compassCalCount;
+        }
+
+        if (_progressBar) {
+            _progressBar->setProperty("value", (float)(_rgCompassCalProgress[0] + _rgCompassCalProgress[1] + _rgCompassCalProgress[2]) / 100.0);
+        }
+    }
+}
+
+void APMSensorsComponentController::_handleMagCalReport(mavlink_message_t& message)
+{
+    if (_onboardMagCalInProgress) {
+        mavlink_mag_cal_report_t magCalReport;
+        mavlink_msg_mag_cal_report_decode(&message, &magCalReport);
+
+        qCDebug(APMSensorsComponentControllerLog) << "_handleMagCalReport id:mask:status:fitness"
+                                                  << magCalReport.compass_id << magCalReport.cal_mask << magCalReport.cal_status << magCalReport.fitness;
+
+        if (magCalReport.compass_id < 3 && !_rgCompassCalComplete[magCalReport.compass_id]) {
+            if (magCalReport.cal_status == MAG_CAL_SUCCESS) {
+                _appendStatusLog(tr("Compass %1 calibration complete").arg(magCalReport.compass_id));
+            } else {
+                _appendStatusLog(tr("Compass %1 calibration below quality threshold").arg(magCalReport.compass_id));
+            }
+            _rgCompassCalComplete[magCalReport.compass_id] = true;
+            _rgCompassCalSucceeded[magCalReport.compass_id] = magCalReport.cal_status == MAG_CAL_SUCCESS;
+            _rgCompassCalFitness[magCalReport.compass_id] = magCalReport.fitness;
+        }
+
+        if (_rgCompassCalComplete[0] && _rgCompassCalComplete[1] &&_rgCompassCalComplete[2]) {
+            if (_rgCompassCalSucceeded[0] && _rgCompassCalSucceeded[1] && _rgCompassCalSucceeded[2]) {
+                _appendStatusLog(tr("All compasses calibrated successfully"));
+                _appendStatusLog(tr("YOU MUST REBOOT YOUR VEHICLE NOW FOR NEW SETTINGS TO TAKE AFFECT"));
+                _stopCalibration(StopCalibrationSuccessShowLog);
+            } else {
+                _appendStatusLog(tr("Compass calibration failed"));
+                _appendStatusLog(tr("YOU MUST REBOOT YOUR VEHICLE NOW AND RETRY COMPASS CALIBRATION PRIOR TO FLIGHT"));
+                _stopCalibration(StopCalibrationFailed);
+            }
+        } else {
+            _appendStatusLog(tr("Continue rotating..."));
+        }
+
+    }
+}
+
+void APMSensorsComponentController::_mavlinkMessageReceived(LinkInterface* link, mavlink_message_t message)
+{
+    Q_UNUSED(link);
+
+    if (message.sysid != _vehicle->id()) {
+        return;
+    }
+
+    switch (message.msgid) {
+    case MAVLINK_MSG_ID_COMMAND_ACK:
+        _handleCommandAck(message);
+        break;
+    case MAVLINK_MSG_ID_MAG_CAL_PROGRESS:
+        _handleMagCalProgress(message);
+        break;
+    case MAVLINK_MSG_ID_MAG_CAL_REPORT:
+        _handleMagCalReport(message);
+        break;
     }
 }

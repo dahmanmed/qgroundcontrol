@@ -65,7 +65,6 @@ SetupPage {
             property Fact compass1Id:           controller.getParameterFact(-1, "COMPASS_DEV_ID")
             property Fact compass2Id:           controller.getParameterFact(-1, "COMPASS_DEV_ID2")
             property Fact compass3Id:           controller.getParameterFact(-1, "COMPASS_DEV_ID3")
-            property Fact compass1ExternalFact: controller.getParameterFact(-1, "COMPASS_EXTERNAL")
             property Fact compass1Rot:          controller.getParameterFact(-1, "COMPASS_ORIENT")
 
             property Fact boardRot:             controller.getParameterFact(-1, "AHRS_ORIENTATION")
@@ -76,8 +75,6 @@ SetupPage {
 
             // The following parameters are not available in olders firmwares
 
-            property bool compass2ExternalParamAvailable:   controller.parameterExists(-1, "COMPASS_EXTERN2")
-            property bool compass3ExternalParamAvailable:   controller.parameterExists(-1, "COMPASS_EXTERN3")
             property bool compass2RotParamAvailable:        controller.parameterExists(-1, "COMPASS_ORIENT2")
             property bool compass3RotParamAvailable:        controller.parameterExists(-1, "COMPASS_ORIENT3")
             property bool compass1UseParamAvailable:        controller.parameterExists(-1, "COMPASS_USE")
@@ -85,8 +82,6 @@ SetupPage {
             property bool compass3UseParamAvailable:        controller.parameterExists(-1, "COMPASS_USE3")
 
             property Fact noFact: Fact { }
-            property Fact compass2ExternalFact: compass2ExternalParamAvailable ? controller.getParameterFact(-1, "COMPASS_EXTERN2") : noFact
-            property Fact compass3ExternalFact: compass3ExternalParamAvailable ? controller.getParameterFact(-1, "COMPASS_EXTERN3") : noFact
             property Fact compass2Rot:          compass2RotParamAvailable ? controller.getParameterFact(-1, "COMPASS_ORIENT2") : noFact
             property Fact compass3Rot:          compass3RotParamAvailable ? controller.getParameterFact(-1, "COMPASS_ORIENT3") : noFact
             property Fact compass1UseFact:      compass1UseParamAvailable ? controller.getParameterFact(-1, "COMPASS_USE") : noFact
@@ -94,9 +89,6 @@ SetupPage {
             property Fact compass3UseFact:      compass3UseParamAvailable ? controller.getParameterFact(-1, "COMPASS_USE3") : noFact
 
             // We track these values by binding through a separate property so we can handle missing params
-            property bool compass1External: compass1ExternalFact.value
-            property bool compass2External: compass2ExternalParamAvailable ? compass2ExternalFact.value : false // false: Simulate internal so we don't show rotation combos
-            property bool compass3External: compass3ExternalParamAvailable ? compass3ExternalFact.value : false // false: Simulate internal so we don't show rotation combos
             property bool compass1Use:      compass1UseParamAvailable ? compass1UseFact.value : true
             property bool compass2Use:      compass2UseParamAvailable ? compass2UseFact.value : true
             property bool compass3Use:      compass3UseParamAvailable ? compass3UseFact.value : true
@@ -113,13 +105,6 @@ SetupPage {
             property bool   _orientationsDialogShowCompass: true
             property string _orientationDialogHelp:         orientationHelpSet
             property int    _orientationDialogCalType
-
-            function validCompassOffsets(compassParamPrefix) {
-                var ofsX = controller.getParameterFact(-1, compassParamPrefix + "X")
-                var ofsY = controller.getParameterFact(-1, compassParamPrefix + "Y")
-                var ofsZ = controller.getParameterFact(-1, compassParamPrefix + "Z")
-                return Math.sqrt(ofsX.value^2 + ofsY.value^2 + ofsZ.value^2) < 600
-            }
 
             function showOrientationsDialog(calType) {
                 var dialogTitle
@@ -175,41 +160,9 @@ SetupPage {
 
                 onCalibrationComplete: {
                     if (_orientationDialogCalType == _calTypeAccel) {
-                        _postCalibrationDialogText = qsTr("Accelerometer calibration complete.")
-                        _postCalibrationDialogParams = [ "INS_ACCSCAL_X", "INS_ACCSCAL_Y", "INS_ACCSCAL_Z",
-                                                        "INS_ACC2SCAL_X", "INS_ACC2SCAL_Y", "INS_ACC2SCAL_Z",
-                                                        "INS_ACC3SCAL_X", "INS_ACC3SCAL_Y", "INS_ACC3SCAL_Z",
-                                                        "INS_GYROFFS_X", "INS_GYROFFS_Y", "INS_GYROFFS_Z",
-                                                        "INS_GYR2OFFS_X", "INS_GYR2OFFS_Y", "INS_GYR2OFFS_Z",
-                                                        "INS_GYR3OFFS_X", "INS_GYR3OFFS_Y", "INS_GYR3OFFS_Z" ]
-                        showDialog(postCalibrationDialogComponent, qsTr("Calibration complete"), qgcView.showDialogDefaultWidth, StandardButton.Ok)
+                        showMessage(qsTr("Calibration complete"), qsTr("Accelerometer calibration complete."), StandardButton.Ok)
                     } else if (_orientationDialogCalType == _calTypeCompass) {
                         _postCalibrationDialogText = qsTr("Compass calibration complete. ")
-                        _postCalibrationDialogParams = [];
-                        if (compass1Id.value > 0) {
-                            if (!validCompassOffsets("COMPASS_OFS_")) {
-                                _postCalibrationDialogText += _badCompassCalText.replace("%1", 1)
-                            }
-                            _postCalibrationDialogParams.push("COMPASS_OFS_X")
-                            _postCalibrationDialogParams.push("COMPASS_OFS_Y")
-                            _postCalibrationDialogParams.push("COMPASS_OFS_Z")
-                        }
-                        if (compass2Id.value > 0) {
-                            if (!validCompassOffsets("COMPASS_OFS_")) {
-                                _postCalibrationDialogText += _badCompassCalText.replace("%1", 2)
-                            }
-                            _postCalibrationDialogParams.push("COMPASS_OFS2_X")
-                            _postCalibrationDialogParams.push("COMPASS_OFS2_Y")
-                            _postCalibrationDialogParams.push("COMPASS_OFS2_Z")
-                        }
-                        if (compass3Id.value > 0) {
-                            if (!validCompassOffsets("COMPASS_OFS_")) {
-                                _postCalibrationDialogText += _badCompassCalText.replace("%1", 3)
-                            }
-                            _postCalibrationDialogParams.push("COMPASS_OFS3_X")
-                            _postCalibrationDialogParams.push("COMPASS_OFS3_Y")
-                            _postCalibrationDialogParams.push("COMPASS_OFS3_Z")
-                        }
                         showDialog(postCalibrationDialogComponent, qsTr("Calibration complete"), qgcView.showDialogDefaultWidth, StandardButton.Ok)
                     }
                 }
@@ -235,36 +188,6 @@ SetupPage {
                         anchors.right:  parent.right
                         wrapMode:       Text.WordWrap
                         text:           _postCalibrationDialogText
-                    }
-
-                    QGCCheckBox {
-                        id:                 showValues
-                        anchors.topMargin:  ScreenTools.defaultFontPixelHeight
-                        anchors.top:        textLabel.bottom
-                        text:               qsTr("Show values")
-                    }
-
-                    QGCFlickable {
-                        anchors.topMargin:  ScreenTools.defaultFontPixelHeight
-                        anchors.top:        showValues.bottom
-                        anchors.bottom:     parent.bottom
-                        contentHeight:      valueColumn.height
-                        flickableDirection: Flickable.VerticalFlick
-                        visible:            showValues.checked
-
-                        Column {
-                            id: valueColumn
-
-                            Repeater {
-                                model: _postCalibrationDialogParams
-
-                                QGCLabel {
-                                    text: fact.name +": " + fact.valueString
-
-                                    property Fact fact: controller.getParameterFact(-1, modelData)
-                                }
-                            }
-                        }
                     }
                 }
             }
@@ -324,8 +247,6 @@ SetupPage {
                                 }
 
                                 Column {
-                                    visible: showCompass1Rot
-
                                     QGCLabel {
                                         text: qsTr("Compass 1 Orientation:")
                                     }
@@ -347,7 +268,7 @@ SetupPage {
                                 }
 
                                 Column {
-                                    visible: showCompass1Rot
+                                    visible: compass2RotParamAvailable
 
                                     QGCLabel {
                                         text: qsTr("Compass 2 Orientation:")
@@ -370,7 +291,7 @@ SetupPage {
                                 }
 
                                 Column {
-                                    visible: showCompass3Rot
+                                    visible: compass2RotParamAvailable
 
                                     QGCLabel {
                                         text: qsTr("Compass 3 Orientation:")

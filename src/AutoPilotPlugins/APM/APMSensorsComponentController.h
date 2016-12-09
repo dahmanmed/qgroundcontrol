@@ -75,7 +75,14 @@ public:
     Q_PROPERTY(bool orientationCalTailDownSideRotate MEMBER _orientationCalTailDownSideRotate NOTIFY orientationCalSidesRotateChanged)
     
     Q_PROPERTY(bool waitingForCancel MEMBER _waitingForCancel NOTIFY waitingForCancelChanged)
-    
+
+    Q_PROPERTY(bool compass1CalSucceeded READ compass1CalSucceeded NOTIFY compass1CalSucceededChanged)
+    Q_PROPERTY(bool compass2CalSucceeded READ compass2CalSucceeded NOTIFY compass2CalSucceededChanged)
+    Q_PROPERTY(bool compass3CalSucceeded READ compass3CalSucceeded NOTIFY compass3CalSucceededChanged)
+    Q_PROPERTY(double compass1CalFitness READ compass1CalFitness NOTIFY compass1CalFitnessChanged)
+    Q_PROPERTY(double compass2CalFitness READ compass2CalFitness NOTIFY compass2CalFitnessChanged)
+    Q_PROPERTY(double compass3CalFitness READ compass3CalFitness NOTIFY compass3CalFitnessChanged)
+
     Q_INVOKABLE void calibrateCompass(void);
     Q_INVOKABLE void calibrateAccel(void);
     Q_INVOKABLE void calibrateMotorInterference(void);
@@ -86,7 +93,14 @@ public:
 
     bool compassSetupNeeded(void) const;
     bool accelSetupNeeded(void) const;
-    
+
+    bool compass1CalSucceeded(void) const { return _rgCompassCalSucceeded[0]; }
+    bool compass2CalSucceeded(void) const { return _rgCompassCalSucceeded[1]; }
+    bool compass3CalSucceeded(void) const { return _rgCompassCalSucceeded[2]; }
+    double compass1CalFitness(void) const { return _rgCompassCalFitness[0]; }
+    double compass2CalFitness(void) const { return _rgCompassCalFitness[1]; }
+    double compass3CalFitness(void) const { return _rgCompassCalFitness[2]; }
+
 signals:
     void showGyroCalAreaChanged(void);
     void showOrientationCalAreaChanged(void);
@@ -98,10 +112,17 @@ signals:
     void waitingForCancelChanged(void);
     void setupNeededChanged(void);
     void calibrationComplete(void);
-    
+    void compass1CalSucceededChanged(bool compass1CalSucceeded);
+    void compass2CalSucceededChanged(bool compass2CalSucceeded);
+    void compass3CalSucceededChanged(bool compass3CalSucceeded);
+    void compass1CalFitnessChanged(double compass1CalFitness);
+    void compass2CalFitnessChanged(double compass2CalFitness);
+    void compass3CalFitnessChanged(double compass3CalFitness);
+
 private slots:
     void _handleUASTextMessage(int uasId, int compId, int severity, QString text);
     void _mavlinkMessageReceived(LinkInterface* link, mavlink_message_t message);
+    void _mavCommandResult(int vehicleId, int component, int command, int result, bool noReponseFromVehicle);
 
 private:
     void _startLogCalibration(void);
@@ -110,7 +131,10 @@ private:
     void _refreshParams(void);
     void _hideAllCalAreas(void);
     void _resetInternalState(void);
-    
+    void _handleCommandAck(mavlink_message_t& message);
+    void _handleMagCalProgress(mavlink_message_t& message);
+    void _handleMagCalReport(mavlink_message_t& message);
+
     enum StopCalibrationCode {
         StopCalibrationSuccess,
         StopCalibrationSuccessShowLog,
@@ -137,11 +161,17 @@ private:
     
     bool _showOrientationCalArea;
     
-    bool _magCalInProgress;
+    bool _offboardMagCalInProgress;
+    bool _onboardMagCalInProgress;
     bool _accelCalInProgress;
     bool _compassMotCalInProgress;
     bool _levelInProgress;
-    
+
+    uint8_t _rgCompassCalProgress[3];
+    bool    _rgCompassCalComplete[3];
+    bool    _rgCompassCalSucceeded[3];
+    float   _rgCompassCalFitness[3];
+
     bool _orientationCalDownSideDone;
     bool _orientationCalUpsideDownSideDone;
     bool _orientationCalLeftSideDone;
