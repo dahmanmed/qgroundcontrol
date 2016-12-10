@@ -79,6 +79,7 @@ public:
     Q_PROPERTY(bool compass1CalSucceeded READ compass1CalSucceeded NOTIFY compass1CalSucceededChanged)
     Q_PROPERTY(bool compass2CalSucceeded READ compass2CalSucceeded NOTIFY compass2CalSucceededChanged)
     Q_PROPERTY(bool compass3CalSucceeded READ compass3CalSucceeded NOTIFY compass3CalSucceededChanged)
+
     Q_PROPERTY(double compass1CalFitness READ compass1CalFitness NOTIFY compass1CalFitnessChanged)
     Q_PROPERTY(double compass2CalFitness READ compass2CalFitness NOTIFY compass2CalFitnessChanged)
     Q_PROPERTY(double compass3CalFitness READ compass3CalFitness NOTIFY compass3CalFitnessChanged)
@@ -94,9 +95,20 @@ public:
     bool compassSetupNeeded(void) const;
     bool accelSetupNeeded(void) const;
 
+    typedef enum {
+        CalTypeAccel,
+        CalTypeOnboardCompass,
+        CalTypeOffboardCompass,
+        CalTypeLevelHorizon,
+        CalTypeCompassMot,
+        CalTypeNone
+    } CalType_t;
+    Q_ENUM(CalType_t)
+
     bool compass1CalSucceeded(void) const { return _rgCompassCalSucceeded[0]; }
     bool compass2CalSucceeded(void) const { return _rgCompassCalSucceeded[1]; }
     bool compass3CalSucceeded(void) const { return _rgCompassCalSucceeded[2]; }
+
     double compass1CalFitness(void) const { return _rgCompassCalFitness[0]; }
     double compass2CalFitness(void) const { return _rgCompassCalFitness[1]; }
     double compass3CalFitness(void) const { return _rgCompassCalFitness[2]; }
@@ -111,7 +123,7 @@ signals:
     void resetStatusTextArea(void);
     void waitingForCancelChanged(void);
     void setupNeededChanged(void);
-    void calibrationComplete(void);
+    void calibrationComplete(CalType_t calType);
     void compass1CalSucceededChanged(bool compass1CalSucceeded);
     void compass2CalSucceededChanged(bool compass2CalSucceeded);
     void compass3CalSucceededChanged(bool compass3CalSucceeded);
@@ -161,11 +173,7 @@ private:
     
     bool _showOrientationCalArea;
     
-    bool _offboardMagCalInProgress;
-    bool _onboardMagCalInProgress;
-    bool _accelCalInProgress;
-    bool _compassMotCalInProgress;
-    bool _levelInProgress;
+    CalType_t _calTypeInProgress;
 
     uint8_t _rgCompassCalProgress[3];
     bool    _rgCompassCalComplete[3];

@@ -20,47 +20,43 @@
 
 QGC_LOGGING_CATEGORY(APMSensorsComponentControllerLog, "APMSensorsComponentControllerLog")
 
-APMSensorsComponentController::APMSensorsComponentController(void) :
-    _statusLog(NULL),
-    _progressBar(NULL),
-    _compassButton(NULL),
-    _accelButton(NULL),
-    _compassMotButton(NULL),
-    _levelButton(NULL),
-    _nextButton(NULL),
-    _cancelButton(NULL),
-    _setOrientationsButton(NULL),
-    _showOrientationCalArea(false),
-    _offboardMagCalInProgress(false),
-    _onboardMagCalInProgress(false),
-    _accelCalInProgress(false),
-    _compassMotCalInProgress(false),
-    _levelInProgress(false),
-    _orientationCalDownSideDone(false),
-    _orientationCalUpsideDownSideDone(false),
-    _orientationCalLeftSideDone(false),
-    _orientationCalRightSideDone(false),
-    _orientationCalNoseDownSideDone(false),
-    _orientationCalTailDownSideDone(false),
-    _orientationCalDownSideVisible(false),
-    _orientationCalUpsideDownSideVisible(false),
-    _orientationCalLeftSideVisible(false),
-    _orientationCalRightSideVisible(false),
-    _orientationCalNoseDownSideVisible(false),
-    _orientationCalTailDownSideVisible(false),
-    _orientationCalDownSideInProgress(false),
-    _orientationCalUpsideDownSideInProgress(false),
-    _orientationCalLeftSideInProgress(false),
-    _orientationCalRightSideInProgress(false),
-    _orientationCalNoseDownSideInProgress(false),
-    _orientationCalTailDownSideInProgress(false),
-    _orientationCalDownSideRotate(false),
-    _orientationCalUpsideDownSideRotate(false),
-    _orientationCalLeftSideRotate(false),
-    _orientationCalRightSideRotate(false),
-    _orientationCalNoseDownSideRotate(false),
-    _orientationCalTailDownSideRotate(false),
-    _waitingForCancel(false)
+APMSensorsComponentController::APMSensorsComponentController(void)
+    : _statusLog(NULL)
+    , _progressBar(NULL)
+    , _compassButton(NULL)
+    , _accelButton(NULL)
+    , _compassMotButton(NULL)
+    , _levelButton(NULL)
+    , _nextButton(NULL)
+    , _cancelButton(NULL)
+    , _setOrientationsButton(NULL)
+    , _showOrientationCalArea(false)
+    , _calTypeInProgress(CalTypeNone)
+    , _orientationCalDownSideDone(false)
+    , _orientationCalUpsideDownSideDone(false)
+    , _orientationCalLeftSideDone(false)
+    , _orientationCalRightSideDone(false)
+    , _orientationCalNoseDownSideDone(false)
+    , _orientationCalTailDownSideDone(false)
+    , _orientationCalDownSideVisible(false)
+    , _orientationCalUpsideDownSideVisible(false)
+    , _orientationCalLeftSideVisible(false)
+    , _orientationCalRightSideVisible(false)
+    , _orientationCalNoseDownSideVisible(false)
+    , _orientationCalTailDownSideVisible(false)
+    , _orientationCalDownSideInProgress(false)
+    , _orientationCalUpsideDownSideInProgress(false)
+    , _orientationCalLeftSideInProgress(false)
+    , _orientationCalRightSideInProgress(false)
+    , _orientationCalNoseDownSideInProgress(false)
+    , _orientationCalTailDownSideInProgress(false)
+    , _orientationCalDownSideRotate(false)
+    , _orientationCalUpsideDownSideRotate(false)
+    , _orientationCalLeftSideRotate(false)
+    , _orientationCalRightSideRotate(false)
+    , _orientationCalNoseDownSideRotate(false)
+    , _orientationCalTailDownSideRotate(false)
+    , _waitingForCancel(false)
 {
     _compassCal.setVehicle(_vehicle);
     connect(&_compassCal, &APMCompassCal::vehicleTextMessage, this, &APMSensorsComponentController::_handleUASTextMessage);
@@ -97,10 +93,10 @@ void APMSensorsComponentController::_startLogCalibration(void)
     _compassMotButton->setEnabled(false);
     _levelButton->setEnabled(false);
     _setOrientationsButton->setEnabled(false);
-    if (_accelCalInProgress || _compassMotCalInProgress) {
+    if (_calTypeInProgress == CalTypeAccel || _calTypeInProgress == CalTypeCompassMot) {
         _nextButton->setEnabled(true);
     }
-    _cancelButton->setEnabled(_onboardMagCalInProgress);
+    _cancelButton->setEnabled(_calTypeInProgress == CalTypeOnboardCompass);
 }
 
 void APMSensorsComponentController::_startVisualCalibration(void)
@@ -176,11 +172,11 @@ void APMSensorsComponentController::_stopCalibration(APMSensorsComponentControll
     case StopCalibrationSuccess:
         _orientationCalAreaHelpText->setProperty("text", "Calibration complete");
         emit resetStatusTextArea();
-        emit calibrationComplete();
+        emit calibrationComplete(_calTypeInProgress);
         break;
 
     case StopCalibrationSuccessShowLog:
-        emit calibrationComplete();
+        emit calibrationComplete(_calTypeInProgress);
         break;
 
     case StopCalibrationCancelled:
@@ -195,11 +191,7 @@ void APMSensorsComponentController::_stopCalibration(APMSensorsComponentControll
         break;
     }
     
-    _onboardMagCalInProgress = false;
-    _offboardMagCalInProgress = false;
-    _accelCalInProgress = false;
-    _compassMotCalInProgress = false;
-    _levelInProgress = false;
+    _calTypeInProgress = CalTypeNone;
 }
 
 void APMSensorsComponentController::_mavCommandResult(int vehicleId, int component, int command, int result, bool noReponseFromVehicle)
@@ -211,7 +203,7 @@ void APMSensorsComponentController::_mavCommandResult(int vehicleId, int compone
         disconnect(_vehicle, &Vehicle::mavCommandResult, this, &APMSensorsComponentController::_mavCommandResult);
         if (result == MAV_RESULT_ACCEPTED) {
             // Onboard mag cal is supported
-            _onboardMagCalInProgress = true;
+            _calTypeInProgress = CalTypeOnboardCompass;
             _rgCompassCalProgress[0] = 0;
             _rgCompassCalProgress[1] = 0;
             _rgCompassCalProgress[2] = 0;
@@ -269,7 +261,7 @@ void APMSensorsComponentController::calibrateCompass(void)
 
 void APMSensorsComponentController::calibrateAccel(void)
 {
-    _accelCalInProgress = true;
+    _calTypeInProgress = CalTypeAccel;
     _vehicle->setConnectionLostEnabled(false);
     _startLogCalibration();
     _uas->startCalibration(UASInterface::StartCalibrationAccel);
@@ -277,7 +269,7 @@ void APMSensorsComponentController::calibrateAccel(void)
 
 void APMSensorsComponentController::calibrateMotorInterference(void)
 {
-    _compassMotCalInProgress = true;
+    _calTypeInProgress = CalTypeCompassMot;
     _vehicle->setConnectionLostEnabled(false);
     _startLogCalibration();
     _appendStatusLog(tr("Raise the throttle slowly to between 50% ~ 75% (the props will spin!) for 5 ~ 10 seconds."));
@@ -288,7 +280,7 @@ void APMSensorsComponentController::calibrateMotorInterference(void)
 
 void APMSensorsComponentController::levelHorizon(void)
 {
-    _levelInProgress = true;
+    _calTypeInProgress = CalTypeLevelHorizon;
     _vehicle->setConnectionLostEnabled(false);
     _startLogCalibration();
     _appendStatusLog(tr("Hold the vehicle in its level flight position."));
@@ -377,7 +369,7 @@ void APMSensorsComponentController::_handleUASTextMessage(int uasId, int compId,
             _orientationCalAreaHelpText->setProperty("text", "Place your vehicle into one of the Incomplete orientations shown below and hold it still");
             
             if (text == "accel") {
-                _accelCalInProgress = true;
+                _calTypeInProgress = CalTypeAccel;
                 _orientationCalDownSideVisible = true;
                 _orientationCalUpsideDownSideVisible = true;
                 _orientationCalLeftSideVisible = true;
@@ -385,7 +377,7 @@ void APMSensorsComponentController::_handleUASTextMessage(int uasId, int compId,
                 _orientationCalTailDownSideVisible = true;
                 _orientationCalNoseDownSideVisible = true;
             } else if (text == "mag") {
-                _offboardMagCalInProgress = true;
+                _calTypeInProgress = CalTypeOffboardCompass;
                 _orientationCalDownSideVisible = true;
                 _orientationCalUpsideDownSideVisible = true;
                 _orientationCalLeftSideVisible = true;
@@ -409,37 +401,37 @@ void APMSensorsComponentController::_handleUASTextMessage(int uasId, int compId,
         
         if (side == QLatin1Literal("down")) {
             _orientationCalDownSideInProgress = true;
-            if (_offboardMagCalInProgress) {
+            if (_calTypeInProgress == CalTypeOffboardCompass) {
                 _orientationCalDownSideRotate = true;
             }
         } else if (side == QLatin1Literal("up")) {
             _orientationCalUpsideDownSideInProgress = true;
-            if (_offboardMagCalInProgress) {
+            if (_calTypeInProgress == CalTypeOffboardCompass) {
                 _orientationCalUpsideDownSideRotate = true;
             }
         } else if (side == QLatin1Literal("left")) {
             _orientationCalLeftSideInProgress = true;
-            if (_offboardMagCalInProgress) {
+            if (_calTypeInProgress == CalTypeOffboardCompass) {
                 _orientationCalLeftSideRotate = true;
             }
         } else if (side == QLatin1Literal("right")) {
             _orientationCalRightSideInProgress = true;
-            if (_offboardMagCalInProgress) {
+            if (_calTypeInProgress == CalTypeOffboardCompass) {
                 _orientationCalRightSideRotate = true;
             }
         } else if (side == QLatin1Literal("front")) {
             _orientationCalNoseDownSideInProgress = true;
-            if (_offboardMagCalInProgress) {
+            if (_calTypeInProgress == CalTypeOffboardCompass) {
                 _orientationCalNoseDownSideRotate = true;
             }
         } else if (side == QLatin1Literal("back")) {
             _orientationCalTailDownSideInProgress = true;
-            if (_offboardMagCalInProgress) {
+            if (_calTypeInProgress == CalTypeOffboardCompass) {
                 _orientationCalTailDownSideRotate = true;
             }
         }
         
-        if (_offboardMagCalInProgress) {
+        if (_calTypeInProgress == CalTypeOffboardCompass) {
             _orientationCalAreaHelpText->setProperty("text", "Rotate the vehicle continuously as shown in the diagram until marked as Completed");
         } else {
             _orientationCalAreaHelpText->setProperty("text", "Hold still in the current orientation");
@@ -534,11 +526,11 @@ void APMSensorsComponentController::cancelCalibration(void)
 {
     _cancelButton->setEnabled(false);
 
-    if (_offboardMagCalInProgress) {
+    if (_calTypeInProgress == CalTypeOffboardCompass) {
         _waitingForCancel = true;
         emit waitingForCancelChanged();
         _compassCal.cancelCalibration();
-    } else if (_onboardMagCalInProgress) {
+    } else if (_calTypeInProgress == CalTypeOnboardCompass) {
         _vehicle->sendMavCommand(_vehicle->defaultComponentId(), MAV_CMD_DO_CANCEL_MAG_CAL, true /* showError */);
         _stopCalibration(StopCalibrationCancelled);
     } else {
@@ -566,7 +558,7 @@ void APMSensorsComponentController::nextClicked(void)
 
     _vehicle->sendMessageOnLink(_vehicle->priorityLink(), msg);
 
-    if (_compassMotCalInProgress) {
+    if (_calTypeInProgress == CalTypeCompassMot) {
         _stopCalibration(StopCalibrationSuccess);
     }
 }
@@ -588,7 +580,7 @@ bool APMSensorsComponentController::usingUDPLink(void)
 
 void APMSensorsComponentController::_handleCommandAck(mavlink_message_t& message)
 {
-    if (_levelInProgress) {
+    if (_calTypeInProgress == CalTypeLevelHorizon) {
         mavlink_command_ack_t commandAck;
         mavlink_msg_command_ack_decode(&message, &commandAck);
 
@@ -609,7 +601,7 @@ void APMSensorsComponentController::_handleCommandAck(mavlink_message_t& message
 
 void APMSensorsComponentController::_handleMagCalProgress(mavlink_message_t& message)
 {
-    if (_onboardMagCalInProgress) {
+    if (_calTypeInProgress == CalTypeOnboardCompass) {
         mavlink_mag_cal_progress_t magCalProgress;
         mavlink_msg_mag_cal_progress_decode(&message, &magCalProgress);
 
@@ -637,13 +629,14 @@ void APMSensorsComponentController::_handleMagCalProgress(mavlink_message_t& mes
 
 void APMSensorsComponentController::_handleMagCalReport(mavlink_message_t& message)
 {
-    if (_onboardMagCalInProgress) {
+    if (_calTypeInProgress == CalTypeOnboardCompass) {
         mavlink_mag_cal_report_t magCalReport;
         mavlink_msg_mag_cal_report_decode(&message, &magCalReport);
 
         qCDebug(APMSensorsComponentControllerLog) << "_handleMagCalReport id:mask:status:fitness"
                                                   << magCalReport.compass_id << magCalReport.cal_mask << magCalReport.cal_status << magCalReport.fitness;
 
+        bool additionalCompassCompleted = false;
         if (magCalReport.compass_id < 3 && !_rgCompassCalComplete[magCalReport.compass_id]) {
             if (magCalReport.cal_status == MAG_CAL_SUCCESS) {
                 _appendStatusLog(tr("Compass %1 calibration complete").arg(magCalReport.compass_id));
@@ -653,9 +646,16 @@ void APMSensorsComponentController::_handleMagCalReport(mavlink_message_t& messa
             _rgCompassCalComplete[magCalReport.compass_id] = true;
             _rgCompassCalSucceeded[magCalReport.compass_id] = magCalReport.cal_status == MAG_CAL_SUCCESS;
             _rgCompassCalFitness[magCalReport.compass_id] = magCalReport.fitness;
+            additionalCompassCompleted = true;
         }
 
         if (_rgCompassCalComplete[0] && _rgCompassCalComplete[1] &&_rgCompassCalComplete[2]) {
+            emit compass1CalFitnessChanged(_rgCompassCalFitness[0]);
+            emit compass2CalFitnessChanged(_rgCompassCalFitness[1]);
+            emit compass3CalFitnessChanged(_rgCompassCalFitness[2]);
+            emit compass1CalSucceededChanged(_rgCompassCalSucceeded[0]);
+            emit compass2CalSucceededChanged(_rgCompassCalSucceeded[1]);
+            emit compass3CalSucceededChanged(_rgCompassCalSucceeded[2]);
             if (_rgCompassCalSucceeded[0] && _rgCompassCalSucceeded[1] && _rgCompassCalSucceeded[2]) {
                 _appendStatusLog(tr("All compasses calibrated successfully"));
                 _appendStatusLog(tr("YOU MUST REBOOT YOUR VEHICLE NOW FOR NEW SETTINGS TO TAKE AFFECT"));
@@ -665,7 +665,7 @@ void APMSensorsComponentController::_handleMagCalReport(mavlink_message_t& messa
                 _appendStatusLog(tr("YOU MUST REBOOT YOUR VEHICLE NOW AND RETRY COMPASS CALIBRATION PRIOR TO FLIGHT"));
                 _stopCalibration(StopCalibrationFailed);
             }
-        } else {
+        } else if (additionalCompassCompleted) {
             _appendStatusLog(tr("Continue rotating..."));
         }
 
