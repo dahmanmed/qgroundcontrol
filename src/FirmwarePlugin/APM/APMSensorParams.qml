@@ -1,10 +1,19 @@
+/****************************************************************************
+ *
+ *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ *
+ * QGroundControl is licensed according to the terms in the file
+ * COPYING.md in the root of the source code directory.
+ *
+ ****************************************************************************/
+
 import QtQuick 2.2
 
 import QGroundControl.FactSystem 1.0
 
+/// This is used to handle the various differences between firmware versions and missing parameters in each in a standard way.
 Item {
-    /// Must be specified by consumer of control
-    property var factPanelController
+    property var factPanelController  ///< Must be specified by consumer of control
 
     property Fact _noFact: Fact { }
 
@@ -60,4 +69,19 @@ Item {
     property bool compass2External:                 !!compass2ExternalFact.rawValue
     property bool compass3External:                 !!compass3ExternalFact.rawValue
     property var  rgCompassExternal:                [ compass1External, compass2External, compass3External ]
+
+    property Fact compass1OfsXFact:                 factPanelController.getParameterFact(-1, "COMPASS_OFS_X")
+    property Fact compass1OfsYFact:                 factPanelController.getParameterFact(-1, "COMPASS_OFS_Y")
+    property Fact compass1OfsZFact:                 factPanelController.getParameterFact(-1, "COMPASS_OFS_Z")
+    property Fact compass2OfsXFact:                 factPanelController.getParameterFact(-1, "COMPASS_OFS2_X")
+    property Fact compass2OfsYFact:                 factPanelController.getParameterFact(-1, "COMPASS_OFS2_Y")
+    property Fact compass2OfsZFact:                 factPanelController.getParameterFact(-1, "COMPASS_OFS2_Z")
+    property Fact compass3OfsXFact:                 factPanelController.getParameterFact(-1, "COMPASS_OFS3_X")
+    property Fact compass3OfsYFact:                 factPanelController.getParameterFact(-1, "COMPASS_OFS3_Y")
+    property Fact compass3OfsZFact:                 factPanelController.getParameterFact(-1, "COMPASS_OFS3_Z")
+
+    property bool compass1Calibrated:               compass1Available ? compass1OfsXFact.value != 0.0  && compass1OfsYFact.value != 0.0  &&compass1OfsZFact.value != 0.0 : false
+    property bool compass2Calibrated:               compass2Available ? compass2OfsXFact.value != 0.0  && compass2OfsYFact.value != 0.0  &&compass2OfsZFact.value != 0.0 : false
+    property bool compass3Calibrated:               compass3Available ? compass3OfsXFact.value != 0.0  && compass3OfsYFact.value != 0.0  &&compass3OfsZFact.value != 0.0 : false
+    property var  rgCompassCalibrated:              [ compass1Calibrated, compass2Calibrated, compass3Calibrated ]
 }

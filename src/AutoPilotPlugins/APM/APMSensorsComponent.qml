@@ -30,8 +30,8 @@ SetupPage {
         id:             sensorsPageComponent
 
         RowLayout {
-            width:      1000//availableWidth
-            height:     1000//availableHeight
+            width:      availableWidth
+            height:     availableHeight
             spacing:    ScreenTools.defaultFontPixelWidth / 2
 
             // Help text which is shown both in the status text area prior to pressing a cal button and in the
@@ -169,9 +169,9 @@ SetupPage {
                     anchors.right:  parent.right
                     spacing:        Math.round(ScreenTools.defaultFontPixelHeight / 2)
 
-                    property real greenMaxThreshold:   8 * (sensorFooParams.rgCompassExternal[index] ? 1 : 2)
-                    property real yellowMaxThreshold:  15 * (sensorFooParams.rgCompassExternal[index] ? 1 : 2)
-                    property real fitnessRange:        25 * (sensorFooParams.rgCompassExternal[index] ? 1 : 2)
+                    property real greenMaxThreshold:   8 * (sensorParams.rgCompassExternal[index] ? 1 : 2)
+                    property real yellowMaxThreshold:  15 * (sensorParams.rgCompassExternal[index] ? 1 : 2)
+                    property real fitnessRange:        25 * (sensorParams.rgCompassExternal[index] ? 1 : 2)
 
                     Item {
                         anchors.left:   parent.left
@@ -218,17 +218,17 @@ SetupPage {
 
                         QGCLabel {
                             text: "Compass " + index + " " +
-                                  (sensorFooParams.rgCompassPrimary[index] ? "(primary" : "(secondary") +
-                                  (sensorFooParams.rgCompassExternalParamAvailable[index] ?
-                                       (sensorFooParams.rgCompassExternal[index] ? ", external" : ", internal" ) :
+                                  (sensorParams.rgCompassPrimary[index] ? "(primary" : "(secondary") +
+                                  (sensorParams.rgCompassExternalParamAvailable[index] ?
+                                       (sensorParams.rgCompassExternal[index] ? ", external" : ", internal" ) :
                                        "") +
                                   ")"
                         }
 
                         FactCheckBox {
                             text:       "Use Compass"
-                            fact:       sensorFooParams.rgCompassUseFact[index]
-                            visible:    sensorFooParams.rgCompassUseParamAvailable[index] && !sensorFooParams.rgCompassPrimary[index]
+                            fact:       sensorParams.rgCompassUseFact[index]
+                            visible:    sensorParams.rgCompassUseParamAvailable[index] && !sensorParams.rgCompassPrimary[index]
                         }
                     }
                 }
@@ -271,9 +271,9 @@ SetupPage {
 
                     QGCLabel {
                         text: "Compass " + index + " " +
-                              (sensorFooParams.rgCompassPrimary[index] ? "(primary" : "(secondary") +
-                              (sensorFooParams.rgCompassExternalParamAvailable[index] ?
-                                   (sensorFooParams.rgCompassExternal[index] ? ", external" : ", internal" ) :
+                              (sensorParams.rgCompassPrimary[index] ? "(primary" : "(secondary") +
+                              (sensorParams.rgCompassExternalParamAvailable[index] ?
+                                   (sensorParams.rgCompassExternal[index] ? ", external" : ", internal" ) :
                                    "") +
                               ")"
                     }
@@ -285,19 +285,19 @@ SetupPage {
 
                         FactCheckBox {
                             text:       "Use Compass"
-                            fact:       sensorFooParams.rgCompassUseFact[index]
-                            visible:    sensorFooParams.rgCompassUseParamAvailable[index] && !sensorFooParams.rgCompassPrimary[index]
+                            fact:       sensorParams.rgCompassUseFact[index]
+                            visible:    sensorParams.rgCompassUseParamAvailable[index] && !sensorParams.rgCompassPrimary[index]
                         }
 
                         Column {
-                            visible: sensorFooParams.rgCompassExternal[index] && sensorFooParams.rgCompassRotParamAvailable[index]
+                            visible: sensorParams.rgCompassExternal[index] && sensorParams.rgCompassRotParamAvailable[index]
 
                             QGCLabel { text: qsTr("Orientation:") }
 
                             FactComboBox {
                                 width:      rotationColumnWidth
                                 indexModel: false
-                                fact:       sensorFooParams.rgCompassRotFact[index]
+                                fact:       sensorParams.rgCompassRotFact[index]
                             }
                         }
                     }
@@ -443,6 +443,7 @@ SetupPage {
                 } // QGCViewDialog
             } // Component - levelHorizonDialogComponent
 
+            /// Left button column
             Column {
                 spacing:            ScreenTools.defaultFontPixelHeight / 2
                 Layout.alignment:   Qt.AlignLeft | Qt.AlignTop
@@ -520,6 +521,7 @@ SetupPage {
                 }
             } // Column - Buttons
 
+            /// Right column - cal area
             Column {
                 anchors.top:        parent.top
                 anchors.bottom:     parent.bottom

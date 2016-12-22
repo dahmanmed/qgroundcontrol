@@ -181,7 +181,6 @@ Vehicle::Vehicle(LinkInterface*             link,
     // Now connect the new UAS
     connect(_mav, SIGNAL(attitudeChanged                    (UASInterface*,double,double,double,quint64)),              this, SLOT(_updateAttitude(UASInterface*, double, double, double, quint64)));
     connect(_mav, SIGNAL(attitudeChanged                    (UASInterface*,int,double,double,double,quint64)),          this, SLOT(_updateAttitude(UASInterface*,int,double, double, double, quint64)));
-    connect(_mav, SIGNAL(statusChanged                      (UASInterface*,QString,QString)),                           this, SLOT(_updateState(UASInterface*, QString,QString)));
 
     _loadSettings();
 
@@ -1106,14 +1105,6 @@ void Vehicle::_handletextMessageReceived(UASMessage* message)
     {
         _formatedMessage = message->getFormatedText();
         emit formatedMessageChanged();
-    }
-}
-
-void Vehicle::_updateState(UASInterface*, QString name, QString)
-{
-    if (_currentState != name) {
-        _currentState = name;
-        emit currentStateChanged();
     }
 }
 
