@@ -114,7 +114,7 @@ QGCView {
             south = Math.min(south, lat)
             east = Math.max(east, lon)
             west = Math.min(west, lon)
-        }        
+        }
 
         // Expand the coordinate bounding rect to make room for the tools around the edge of the map
         var latDegreesPerPixel = (north - south) / availableWidth
@@ -438,6 +438,11 @@ QGCView {
                 anchors.left:   parent.left
                 anchors.right:  parent.right
                 mapName:        "MissionEditor"
+
+                MapRectangle {
+                    id:             mapRectangle
+                    border.color:   "red"
+                }
 
                 readonly property real animationDuration: 500
 
@@ -935,57 +940,19 @@ QGCView {
                         lightBorders:       _lightWidgetBorders
                     }
 
-                    DropButton {
-                        id:                 centerMapButton
-                        dropDirection:      dropRight
-                        buttonImage:        "/qmlimages/MapCenter.svg"
-                        viewportMargins:    ScreenTools.defaultFontPixelWidth / 2
-                        exclusiveGroup:     _dropButtonsExclusiveGroup
-                        lightBorders:       _lightWidgetBorders
+                    CenterMapDropButton {
+                        id:                     centerMapButton
+                        exclusiveGroup:         _dropButtonsExclusiveGroup
+                        map:                    editorMap
+                        mapFitViewport:         Qt.rect(leftToolWidth, toolbarHeight, editorMap.width - leftToolWidth - rightPanelWidth, editorMap.height - toolbarHeight)
+                        usePlannedHomePosition: true
+                        geoFenceController:     geoFenceController
+                        missionController:      missionController
+                        rallyPointController:   rallyPointController
 
-                        dropDownComponent: Component {
-                            Column {
-                                spacing: ScreenTools.defaultFontPixelWidth * 0.5
-                                QGCLabel { text: qsTr("Center map:") }
-                                Row {
-                                    spacing: ScreenTools.defaultFontPixelWidth
-                                    QGCButton {
-                                        text: qsTr("Home")
-                                        width:  ScreenTools.defaultFontPixelWidth * 10
-                                        onClicked: {
-                                            centerMapButton.hideDropDown()
-                                            editorMap.center = missionController.visualItems.get(0).coordinate
-                                        }
-                                    }
-                                    QGCButton {
-                                        text: qsTr("Mission")
-                                        width:  ScreenTools.defaultFontPixelWidth * 10
-                                        onClicked: {
-                                            centerMapButton.hideDropDown()
-                                            fitMapViewportToMissionItems()
-                                        }
-                                    }
-                                    QGCButton {
-                                        text: qsTr("All items")
-                                        width:  ScreenTools.defaultFontPixelWidth * 10
-                                        onClicked: {
-                                            centerMapButton.hideDropDown()
-                                            fitMapViewportToAllItems()
-                                        }
-                                    }
-                                    QGCButton {
-                                        text:       qsTr("Vehicle")
-                                        width:      ScreenTools.defaultFontPixelWidth * 10
-                                        enabled:    activeVehicle && activeVehicle.latitude != 0 && activeVehicle.longitude != 0
-                                        property var activeVehicle: _activeVehicle
-                                        onClicked: {
-                                            centerMapButton.hideDropDown()
-                                            editorMap.center = activeVehicle.coordinate
-                                        }
-                                    }
-                                }
-                            }
-                        }
+                        property real toolbarHeight:    qgcView.height - ScreenTools.availableHeight
+                        property real rightPanelWidth:  _rightPanelWidth
+                        property real leftToolWidth:    centerMapButton.x + centerMapButton.width
                     }
 
                     DropButton {

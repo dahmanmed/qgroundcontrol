@@ -160,46 +160,19 @@ Item {
         visible:            _mainIsMap
 
         //-- Map Center Control
-        DropButton {
-            id:                 centerMapDropButton
-            dropDirection:      dropRight
-            buttonImage:        "/qmlimages/MapCenter.svg"
-            viewportMargins:    ScreenTools.defaultFontPixelWidth / 2
-            exclusiveGroup:     _dropButtonsExclusiveGroup
-            z:                  QGroundControl.zOrderWidgets
-            lightBorders:       _lightWidgetBorders
-
-            dropDownComponent: Component {
-                Row {
-                    spacing: ScreenTools.defaultFontPixelWidth
-
-                    QGCCheckBox {
-                        id:         followVehicleCheckBox
-                        text:       qsTr("Follow Vehicle")
-                        checked:    _flightMap ? _flightMap._followVehicle : false
-                        anchors.verticalCenter: parent.verticalCenter
-                        //anchors.baseline:   centerMapButton.baseline - This doesn't work correctly on mobile for some strange reason, so we center instead
-
-                        onClicked: {
-                            _dropButtonsExclusiveGroup.current = null
-                            _flightMap._followVehicle = !_flightMap._followVehicle
-                        }
-                    }
-
-                    QGCButton {
-                        id:         centerMapButton
-                        text:       qsTr("Center map on Vehicle")
-                        enabled:    _activeVehicle && !followVehicleCheckBox.checked
-
-                        property var activeVehicle: QGroundControl.multiVehicleManager.activeVehicle
-
-                        onClicked: {
-                            _dropButtonsExclusiveGroup.current = null
-                            _flightMap.center = activeVehicle.coordinate
-                        }
-                    }
-                }
-            }
+        CenterMapDropButton {
+            id:                     centerMapDropButton
+            exclusiveGroup:         _dropButtonsExclusiveGroup
+            map:                    _flightMap
+            // FIXME: Set correct viewport
+            mapFitViewport:         Qt.rect(0, 0, _flightMap.width, _flightMap.height)
+            usePlannedHomePosition: false
+            geoFenceController:     _flightMap.geoFenceController
+            missionController:      _flightMap.missionController
+            rallyPointController:   _flightMap.rallyPointController
+            showFollowVehicle:      true
+            followVehicle:          _flightMap._followVehicle
+            onFollowVehicleChanged: _flightMap._followVehicle = followVehicle
         }
 
         //-- Map Type Control
