@@ -75,8 +75,13 @@ bool RallyPointController::_loadJsonFile(QJsonDocument& jsonDoc, QString& errorS
 {
     QJsonObject json = jsonDoc.object();
 
-    int fileMajorVersion, fileMinorVersion;
-    if (!JsonHelper::validateQGCJsonFile(json, _jsonFileTypeValue, 1 /* supportedMajorVersion */, 0 /* supportedMinorVersion */, fileMajorVersion, fileMinorVersion, errorString)) {
+    int fileVersion;
+    if (!JsonHelper::validateQGCJsonFile(json,
+                                         _jsonFileTypeValue,    // expected file type
+                                         1,                     // minimum supported version
+                                         1,                     // maximum supported version
+                                         fileVersion,
+                                         errorString)) {
         return false;
     }
 

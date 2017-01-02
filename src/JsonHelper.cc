@@ -98,9 +98,11 @@ void JsonHelper::saveGeoCoordinate(const QGeoCoordinate&    coordinate,
 bool JsonHelper::validateKeyTypes(const QJsonObject& jsonObject, const QStringList& keys, const QList<QJsonValue::Type>& types, QString& errorString)
 {
     for (int i=0; i<keys.count(); i++) {
-        if (jsonObject.contains(keys[i])) {
-            if (jsonObject.value(keys[i]).type() != types[i]) {
-                errorString  = QObject::tr("Incorrect type key:type:expected %1 %2 %3").arg(keys[i]).arg(jsonObject.value(keys[i]).type()).arg(types[i]);
+        QString valueKey = keys[i];
+        if (jsonObject.contains(valueKey)) {
+            const QJsonValue& jsonValue = jsonObject[valueKey];
+            if (jsonValue.type() != types[i]) {
+                errorString  = QObject::tr("Incorrect value type - key:type:expected %1:%2:%3").arg(valueKey).arg(_jsonValueTypeToString(jsonValue.type())).arg(_jsonValueTypeToString(types[i]));
                 return false;
             }
         }
@@ -141,10 +143,9 @@ bool JsonHelper::isJsonFile(const QByteArray& bytes, QJsonDocument& jsonDoc)
 
 bool JsonHelper::validateQGCJsonFile(const QJsonObject& jsonObject,
                                      const QString&     expectedFileType,
-                                     int                supportedMajorVersion,
-                                     int                supportedMinorVersion,
-                                     int&               fileMajorVersion,
-                                     int&               fileMinorVersion,
+                                     int                minSupportedVersion,
+                                     int                maxSupportedVersion,
+                                     int&               version,
                                      QString&           errorString)
 {
     // Check for required keys
@@ -154,7 +155,7 @@ bool JsonHelper::validateQGCJsonFile(const QJsonObject& jsonObject,
     }
 
     // Validate base key types
-    QList<QJsonValue::Type> typeList = { QJsonValue::String, QJsonValue::String };
+    QList<QJsonValue::Type> typeList = { QJsonValue::Double, QJsonValue::String };
     if (!validateKeyTypes(jsonObject, requiredKeys, typeList, errorString)) {
         return false;
     }
@@ -166,25 +167,14 @@ bool JsonHelper::validateQGCJsonFile(const QJsonObject& jsonObject,
         return false;
     }
 
-    // Parse and validate version
-
-    QString incorrectVersionFormatErrorString = QObject::tr("Incorrectly formatted version value");
-    QRegularExpression versionRegExp("(\\d+).(\\d+)");
-    QRegularExpressionMatch match = versionRegExp.match(jsonObject[jsonVersionKey].toString());
-    if (!match.hasMatch()) {
-        errorString = incorrectVersionFormatErrorString;
+    // Check version
+    version = jsonObject[jsonVersionKey].toInt();
+    if (version < minSupportedVersion) {
+        errorString = QObject::tr("File version %1 is no longer supported").arg(version);
         return false;
     }
-    QStringList versionParts = match.capturedTexts();
-    if (versionParts.count() != 3) {
-        errorString = incorrectVersionFormatErrorString;
-        return false;
-    }
-
-    fileMajorVersion = versionParts[0].toInt();
-    fileMinorVersion = versionParts[0].toInt();
-    if (fileMajorVersion > supportedMajorVersion || (fileMajorVersion == supportedMajorVersion && fileMinorVersion > supportedMinorVersion)) {
-        errorString = QObject::tr("File version (%1.%2) is larger than current supported version (%3.%4)").arg(fileMajorVersion).arg(fileMinorVersion).arg(supportedMajorVersion).arg(supportedMinorVersion);
+    if (version > maxSupportedVersion) {
+        errorString = QObject::tr("File version %1 is newer than current supported version %2").arg(version).arg(maxSupportedVersion);
         return false;
     }
 
@@ -283,4 +273,28 @@ bool JsonHelper::validateKeys(const QJsonObject& jsonObject, const QList<JsonHel
         typeList.append(keyInfo[i].type);
     }
     return validateKeyTypes(jsonObject, keyList, typeList, errorString);
+}
+
+QString JsonHelper::_jsonValueTypeToString(QJsonValue::Type type)
+{
+    const struct {
+        QJsonValue::Type    type;
+        const char*         string;
+    } rgTypeToString[] = {
+        { QJsonValue::Null,         "NULL" },
+        { QJsonValue::Bool,         "Bool" },
+        { QJsonValue::Double,       "Double" },
+        { QJsonValue::String,       "String" },
+        { QJsonValue::Array,        "Array" },
+        { QJsonValue::Object,       "Object" },
+        { QJsonValue::Undefined,    "Undefined" },
+    };
+
+    for (size_t i=0; i<sizeof(rgTypeToString)/sizeof(rgTypeToString[0]); i++) {
+        if (type == rgTypeToString[i].type) {
+            return rgTypeToString[i].string;
+        }
+    }
+
+    return QObject::tr("Unknown type: %1").arg(type);
 }
