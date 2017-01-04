@@ -120,6 +120,8 @@ QGCView {
         px4JoystickCheck()
     }
 
+    QGCMapPalette { id: mapPal; lightColors: _mainIsMap ? _flightMap.isSatelliteMap : true }
+
     QGCViewPanel {
         id:             _panel
         anchors.fill:   parent
@@ -215,6 +217,33 @@ QGCView {
             }
             onHideIt: {
                 setPipVisibility(!state)
+            }
+        }
+
+        Row {
+            anchors.topMargin:      ScreenTools.toolbarHeight + _margins
+            anchors.rightMargin:    _margins
+            anchors.right:          parent.right
+            anchors.top:            parent.top
+            spacing:                ScreenTools.defaultFontPixelWidth
+            z:                      _panel.z + 4
+            visible:                QGroundControl.multiVehicleManager.vehicles.count > 1
+
+            property real _margins: ScreenTools.defaultFontPixelWidth / 2
+
+            ExclusiveGroup { id: multiVehicleSelectorGroup }
+
+            QGCRadioButton {
+                exclusiveGroup: multiVehicleSelectorGroup
+                text:           qsTr("Single Vehicle")
+                checked:        true
+                color:          mapPal.text
+            }
+
+            QGCRadioButton {
+                exclusiveGroup: multiVehicleSelectorGroup
+                text:           qsTr("Multi-Vehicle")
+                color:          mapPal.text
             }
         }
 
