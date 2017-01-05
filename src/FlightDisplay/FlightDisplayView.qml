@@ -41,14 +41,15 @@ QGCView {
     property real _pitch:               _activeVehicle ? _activeVehicle.pitch.value   : _defaultPitch
     property real _heading:             _activeVehicle ? _activeVehicle.heading.value : _defaultHeading
 
-
     property Fact _emptyFact:               Fact { }
     property Fact _groundSpeedFact:         _activeVehicle ? _activeVehicle.groundSpeed      : _emptyFact
     property Fact _airSpeedFact:            _activeVehicle ? _activeVehicle.airSpeed         : _emptyFact
 
     property bool activeVehicleJoystickEnabled: _activeVehicle ? _activeVehicle.joystickEnabled : false
 
-    property real _savedZoomLevel:      0
+    property real _savedZoomLevel:  0
+    property real _margins:         ScreenTools.defaultFontPixelWidth / 2
+
 
     property real pipSize:              mainWindow.width * 0.2
 
@@ -221,6 +222,7 @@ QGCView {
         }
 
         Row {
+            id:                     singleMultiSelector
             anchors.topMargin:      ScreenTools.toolbarHeight + _margins
             anchors.rightMargin:    _margins
             anchors.right:          parent.right
@@ -229,20 +231,19 @@ QGCView {
             z:                      _panel.z + 4
             visible:                QGroundControl.multiVehicleManager.vehicles.count > 1
 
-            property real _margins: ScreenTools.defaultFontPixelWidth / 2
-
             ExclusiveGroup { id: multiVehicleSelectorGroup }
 
             QGCRadioButton {
+                id:             singleVehicleView
                 exclusiveGroup: multiVehicleSelectorGroup
-                text:           qsTr("Single Vehicle")
+                text:           qsTr("Single")
                 checked:        true
                 color:          mapPal.text
             }
 
             QGCRadioButton {
                 exclusiveGroup: multiVehicleSelectorGroup
-                text:           qsTr("Multi-Vehicle")
+                text:           qsTr("Multi-Vehicle (WIP)")
                 color:          mapPal.text
             }
         }
@@ -256,7 +257,19 @@ QGCView {
             anchors.bottom:     parent.bottom
             qgcView:            root
             isBackgroundDark:   root.isBackgroundDark
+            visible:            singleVehicleView.checked
         }
+
+        MultiVehicleList {
+            anchors.margins:    _margins
+            anchors.top:        singleMultiSelector.bottom
+            anchors.right:      parent.right
+            anchors.bottom:     parent.bottom
+            width:              ScreenTools.defaultFontPixelWidth * 30
+            visible:            !singleVehicleView.checked
+            z:                  _panel.z + 4
+        }
+
 
         //-- Virtual Joystick
         Loader {

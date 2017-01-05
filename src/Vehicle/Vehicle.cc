@@ -2151,6 +2151,21 @@ void Vehicle::setFirmwarePluginInstanceData(QObject* firmwarePluginInstanceData)
     _firmwarePluginInstanceData = firmwarePluginInstanceData;
 }
 
+QString Vehicle::missionFlightMode(void) const
+{
+    return _firmwarePlugin->missionFlightMode();
+}
+
+QString Vehicle::rtlFlightMode(void) const
+{
+    return _firmwarePlugin->rtlFlightMode();
+}
+
+QString Vehicle::takeControlFlightMode(void) const
+{
+    return _firmwarePlugin->takeControlFlightMode();
+}
+
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
 
