@@ -1175,6 +1175,13 @@ void MissionController::_activeVehicleSet(void)
     connect(missionManager, &MissionManager::currentItemChanged,        this, &MissionController::_currentMissionItemChanged);
     connect(_activeVehicle, &Vehicle::homePositionAvailableChanged,     this, &MissionController::_activeVehicleHomePositionAvailableChanged);
     connect(_activeVehicle, &Vehicle::homePositionChanged,              this, &MissionController::_activeVehicleHomePositionChanged);
+    connect(_activeVehicle, &Vehicle::cruiseSpeedChanged,               this, &MissionController::_cruiseSpeedChanged);
+    connect(_activeVehicle, &Vehicle::hoverSpeedChanged,                this, &MissionController::_hoverSpeedChanged);
+
+    _cruiseSpeed = _activeVehicle->cruiseSpeed();
+    _hoverSpeed = _activeVehicle->hoverSpeed();
+    emit cruiseSpeedChanged(_cruiseSpeed);
+    emit hoverSpeedChanged(_hoverSpeed);
 
     if (_activeVehicle->parameterManager()->parametersReady() && !syncInProgress()) {
         // We are switching between two previously existing vehicles. We have to manually ask for the items from the Vehicle.
@@ -1424,4 +1431,22 @@ void MissionController::_homeCoordinateChanged(void)
 QString MissionController::fileExtension(void) const
 {
     return QGCApplication::missionFileExtension;
+}
+
+double  MissionController::cruiseSpeed(void) const
+{
+    if (_activeVehicle) {
+        _activeVehicle->cruiseSpeed();
+    } else {
+        return 0.0f;
+    }
+}
+
+double  MissionController::hoverSpeed(void) const
+{
+    if (_activeVehicle) {
+        _activeVehicle->hoverSpeed();
+    } else {
+        return 0.0f;
+    }
 }

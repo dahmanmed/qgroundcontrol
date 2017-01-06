@@ -34,15 +34,14 @@ public:
     MissionController(QObject* parent = NULL);
     ~MissionController();
 
-    Q_PROPERTY(QGeoCoordinate       plannedHomePosition READ plannedHomePosition                        NOTIFY plannedHomePositionChanged)
-    Q_PROPERTY(QmlObjectListModel*  visualItems         READ visualItems                                NOTIFY visualItemsChanged)
-    Q_PROPERTY(QmlObjectListModel*  complexVisualItems  READ complexVisualItems                         NOTIFY complexVisualItemsChanged)
-    Q_PROPERTY(QmlObjectListModel*  waypointLines       READ waypointLines                              NOTIFY waypointLinesChanged)
+    Q_PROPERTY(QGeoCoordinate       plannedHomePosition READ plannedHomePosition    NOTIFY plannedHomePositionChanged)
+    Q_PROPERTY(QmlObjectListModel*  visualItems         READ visualItems            NOTIFY visualItemsChanged)
+    Q_PROPERTY(QmlObjectListModel*  complexVisualItems  READ complexVisualItems     NOTIFY complexVisualItemsChanged)
+    Q_PROPERTY(QmlObjectListModel*  waypointLines       READ waypointLines          NOTIFY waypointLinesChanged)
 
-    Q_PROPERTY(double               missionDistance     READ missionDistance                            NOTIFY missionDistanceChanged)
-    Q_PROPERTY(double               missionMaxTelemetry READ missionMaxTelemetry                        NOTIFY missionMaxTelemetryChanged)
-    Q_PROPERTY(double               cruiseDistance      READ cruiseDistance                             NOTIFY cruiseDistanceChanged)
-    Q_PROPERTY(double               hoverDistance       READ hoverDistance                              NOTIFY hoverDistanceChanged)
+    Q_PROPERTY(double               missionDistance     READ missionDistance        NOTIFY missionDistanceChanged)
+    Q_PROPERTY(double               missionTime         READ missionTime            NOTIFY missionTimeChanged)
+    Q_PROPERTY(double               missionMaxTelemetry READ missionMaxTelemetry    NOTIFY missionMaxTelemetryChanged)
 
     Q_INVOKABLE void removeMissionItem(int index);
 
@@ -78,16 +77,11 @@ public:
     QmlObjectListModel* complexVisualItems  (void) { return _complexItems; }
     QmlObjectListModel* waypointLines       (void) { return &_waypointLines; }
 
-    double  missionDistance         (void) const { return _missionDistance; }
-    double  missionMaxTelemetry     (void) const { return _missionMaxTelemetry; }
-    double  cruiseDistance          (void) const { return _cruiseDistance; }
-    double  hoverDistance           (void) const { return _hoverDistance; }
-
-    void setMissionDistance         (double missionDistance );
-    void setMissionMaxTelemetry     (double missionMaxTelemetry);
-    void setCruiseDistance          (double cruiseDistance );
-    void setHoverDistance           (double hoverDistance );
-
+    double  missionDistance     (void) const { return _missionDistance; }
+    double  missionTime         (void) const { return _missionTime; }
+    double  missionMaxTelemetry (void) const { return _missionMaxTelemetry; }
+    double  cruiseSpeed         (void) const;
+    double  hoverSpeed          (void) const;
 
 signals:
     void plannedHomePositionChanged(QGeoCoordinate plannedHomePosition);
@@ -96,9 +90,12 @@ signals:
     void waypointLinesChanged(void);
     void newItemsFromVehicle(void);
     void missionDistanceChanged(double missionDistance);
+    void missionTimeChanged(double missionTime);
     void missionMaxTelemetryChanged(double missionMaxTelemetry);
     void cruiseDistanceChanged(double cruiseDistance);
     void hoverDistanceChanged(double hoverDistance);
+    void cruiseSpeedChanged(double cruiseSpeed);
+    void hoverSpeedChanged(double hoverSpeed);
 
 private slots:
     void _newMissionItemsAvailableFromVehicle();
@@ -132,6 +129,8 @@ private:
     bool _loadJsonMissionFileV2(const QJsonObject& json, QmlObjectListModel* visualItems, QmlObjectListModel* complexItems, QString& errorString);
     bool _loadTextMissionFile(QTextStream& stream, QmlObjectListModel* visualItems, QString& errorString);
     int _nextSequenceNumber(void);
+    void _setMissionDistance(double missionDistance );
+    void _setMissionMaxTelemetry(double missionMaxTelemetry);
 
     // Overrides from PlanElementController
     void _activeVehicleBeingRemoved(void) final;
@@ -146,9 +145,8 @@ private:
     bool                _missionItemsRequested;
     bool                _queuedSend;
     double              _missionDistance;
+    double              _missionTime;
     double              _missionMaxTelemetry;
-    double              _cruiseDistance;
-    double              _hoverDistance;
 
     static const char*  _settingsGroup;
     static const char*  _jsonFileTypeValue;

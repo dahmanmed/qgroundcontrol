@@ -48,6 +48,8 @@ public:
     Q_PROPERTY(bool                 cameraOrientationLandscape  MEMBER _cameraOrientationLandscape  NOTIFY cameraOrientationLandscapeChanged)
     Q_PROPERTY(bool                 manualGrid                  MEMBER _manualGrid                  NOTIFY manualGridChanged)
     Q_PROPERTY(QString              camera                      MEMBER _camera                      NOTIFY cameraChanged)
+    Q_PROPERTY(double               timeBetweenShots            READ timeBetweenShots               NOTIFY timeBetweenShotsChanged)
+
 
     Q_INVOKABLE void clearPolygon(void);
     Q_INVOKABLE void addPolygonCoordinate(const QGeoCoordinate coordinate);
@@ -72,6 +74,7 @@ public:
 
     int     cameraShots(void) const;
     double  coveredArea(void) const { return _coveredArea; }
+    double  timeBetweenShots(void) const;
 
     // Overrides from ComplexMissionItem
 
@@ -121,6 +124,7 @@ signals:
     void cameraOrientationLandscapeChanged  (bool cameraOrientationLandscape);
     void cameraChanged                      (QString camera);
     void manualGridChanged                  (bool manualGrid);
+    void timeBetweenShotsChanged            (void);
 
 private slots:
     void _cameraTriggerChanged(void);
@@ -158,6 +162,7 @@ private:
     double          _surveyDistance;
     int             _cameraShots;
     double          _coveredArea;
+    double          _timeBetweenShots;
 
     Fact            _gridAltitudeFact;
     Fact            _gridAngleFact;

@@ -522,6 +522,8 @@ public:
     bool            isOfflineEditingVehicle () const { return _offlineEditingVehicle; }
     QString         brandImage              () const;
     QStringList     unhealthySensors        () const;
+    double          cruiseSpeed             () const { return _cruiseSpeed; }
+    double          hoverSpeed              () const { return _hoverSpeed; }
 
     Fact* roll              (void) { return &_rollFact; }
     Fact* heading           (void) { return &_headingFact; }
@@ -609,6 +611,8 @@ signals:
     void prearmErrorChanged(const QString& prearmError);
     void soloFirmwareChanged(bool soloFirmware);
     void unhealthySensorsChanged(void);
+    void cruiseSpeedChanged(double cruiseSpeed);
+    void hoverSpeedChanged(double hoverSpeed);
 
     void messagesReceivedChanged    ();
     void messagesSentChanged        ();
@@ -765,6 +769,8 @@ private:
     uint32_t        _onboardControlSensorsUnhealthy;
     bool            _gpsRawIntMessageAvailable;
     bool            _globalPositionIntMessageAvailable;
+    double          _cruiseSpeed;
+    double          _hoverSpeed;
 
     typedef struct {
         int     component;

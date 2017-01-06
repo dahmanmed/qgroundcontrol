@@ -12,6 +12,7 @@
 #include "JsonHelper.h"
 #include "MissionController.h"
 #include "QGCGeo.h"
+#include "QGroundControlQmlGlobal.h"
 
 #include <QPolygonF>
 
@@ -70,6 +71,7 @@ SurveyMissionItem::SurveyMissionItem(Vehicle* vehicle, QObject* parent)
     , _surveyDistance(0.0)
     , _cameraShots(0)
     , _coveredArea(0.0)
+    , _timeBetweenShots(0.0)
     , _gridAltitudeFact             (0, _gridAltitudeFactName,              FactMetaData::valueTypeDouble)
     , _gridAngleFact                (0, _gridAngleFactName,                 FactMetaData::valueTypeDouble)
     , _gridSpacingFact              (0, _gridSpacingFactName,               FactMetaData::valueTypeDouble)
@@ -133,6 +135,10 @@ SurveyMissionItem::SurveyMissionItem(Vehicle* vehicle, QObject* parent)
     connect(&_cameraFocalLengthFact,        &Fact::valueChanged, this, &SurveyMissionItem::_cameraValueChanged);
 
     connect(this, &SurveyMissionItem::cameraTriggerChanged, this, &SurveyMissionItem::_cameraTriggerChanged);
+
+    connect(&_cameraTriggerDistanceFact,    &Fact::valueChanged,            this, &SurveyMissionItem::timeBetweenShotsChanged);
+    connect(_vehicle,                       &Vehicle::cruiseSpeedChanged,   this, &SurveyMissionItem::timeBetweenShotsChanged);
+    connect(_vehicle,                       &Vehicle::hoverSpeedChanged,    this, &SurveyMissionItem::timeBetweenShotsChanged);
 }
 
 void SurveyMissionItem::_setSurveyDistance(double surveyDistance)
@@ -825,4 +831,16 @@ int SurveyMissionItem::cameraShots(void) const
 void SurveyMissionItem::_cameraValueChanged(void)
 {
     emit cameraValueChanged();
+}
+
+double SurveyMissionItem::timeBetweenShots(void) const
+{
+    double groundSpeed;
+
+    if (_vehicle->multiRotor()) {
+        groundSpeed = _vehicle->hoverSpeed();
+    } else {
+        groundSpeed = _vehicle->cruiseSpeed();
+    }
+    return _cameraTriggerDistanceFact.rawValue().toDouble() / groundSpeed;
 }
