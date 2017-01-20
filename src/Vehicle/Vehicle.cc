@@ -1520,13 +1520,14 @@ void Vehicle::_parametersReady(bool parametersReady)
 {
     if (parametersReady && !_missionManagerInitialRequestSent) {
         _missionManagerInitialRequestSent = true;
-        QString missionAutoLoadDir = QGroundControlQmlGlobal::missionAutoLoadDir();
-        if (missionAutoLoadDir.isEmpty()) {
+        QString missionAutoLoadDirPath = QGroundControlQmlGlobal::missionAutoLoadDir();
+        if (missionAutoLoadDirPath.isEmpty()) {
             _missionManager->requestMissionItems();
         } else {
             QmlObjectListModel* visualItems = NULL;
             QmlObjectListModel* complexItems = NULL;
-            QString autoloadFilename = tr("/Users/Don/Downloads/AutoLoad%1.mission").arg(_id);
+            QDir missionAutoLoadDir(missionAutoLoadDirPath);
+            QString autoloadFilename = missionAutoLoadDir.absoluteFilePath(tr("AutoLoad%1.mission").arg(_id));
             if (MissionController::loadItemsFromFile(this, autoloadFilename, &visualItems, &complexItems)) {
                 MissionController::sendItemsToVehicle(this, visualItems);
             }

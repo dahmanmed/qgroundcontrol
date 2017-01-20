@@ -290,16 +290,23 @@ QGCView {
                         Row {
                             spacing: ScreenTools.defaultFontPixelWidth
                             QGCCheckBox {
-                                id:                     autoloadCheckbox
+                                id:                     autoLoadCheckbox
                                 anchors.verticalCenter: parent.verticalCenter
                                 text:                   qsTr("AutoLoad mission directory:")
                                 checked:                QGroundControl.missionAutoLoadDir != ""
-                                onClicked:              autoloadDir.enabled = checked
+
+                                onClicked: {
+                                    autoLoadDir.enabled = checked
+                                    if (!checked) {
+                                        QGroundControl.missionAutoLoadDir = ""
+                                        autoLoadDir.text = ""
+                                    }
+                                }
                             }
                             QGCTextField {
                                 id:                     autoLoadDir
                                 width:                  _editFieldWidth
-                                enabled:                autoloadCheckbox.checked
+                                enabled:                autoLoadCheckbox.checked
                                 anchors.verticalCenter: parent.verticalCenter
                                 text:                   QGroundControl.missionAutoLoadDir
                                 onEditingFinished:      QGroundControl.missionAutoLoadDir = text
